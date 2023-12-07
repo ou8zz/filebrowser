@@ -13,7 +13,7 @@
         <strong>{{ $t("prompts.displayName") }}</strong> {{ name }}
       </p>
 
-      <p v-if="!dir || selected.length > 1">
+      <p>
         <strong>{{ $t("prompts.size") }}:</strong>
         <span id="content_length"></span> {{ humanSize }}
       </p>
@@ -91,25 +91,49 @@ import { mapState, mapGetters } from "vuex";
 import { filesize } from "@/utils";
 import moment from "moment";
 import { files as api } from "@/api";
+import { fetchURL } from "../../api/utils.js";
 
 export default {
   name: "info",
+  data() {
+    return {
+      humanSize: 'Loading...',
+    }
+  },
+  created() {
+    console.log("exec getHumanSize");
+    this.getHumanSize();
+  },
   computed: {
     ...mapState(["req", "selected"]),
     ...mapGetters(["selectedCount", "isListing"]),
-    humanSize: function () {
-      if (this.selectedCount === 0 || !this.isListing) {
-        return filesize(this.req.size);
-      }
+    // humanSize: function () {
+    //   if (this.selectedCount === 0 || !this.isListing) {
+    //     console.log("this.req.size:", this.req.size);
+    //     return filesize(this.req.size);
+    //   }
 
-      let sum = 0;
+    //   let sum = 0;
+    //   let urls = '';
+    //   for (let selected of this.selected) {
+    //     // sum += this.req.items[selected].size;
+    //     urls += this.req.items[selected].path + ',';
+    //   }
 
-      for (let selected of this.selected) {
-        sum += this.req.items[selected].size;
-      }
+    //   // const res = await fetchURL(`/api/size?paths=${urls}`, {});
+    //   // console.log("res", res);
+    //   // let data = await res.json();
+    //   // console.log("data", data);
+    //   // console.log("data.size", data.size);
+    //   // return filesize(data.size);
 
-      return filesize(sum);
-    },
+    //   return fetchURL(`/api/size?paths=${urls}`, {}).then((res)=>{
+    //     let data = res.json();
+    //     console.log("data:", data);
+    //     console.log("data:", filesize(data.size));
+    //     return 123456789;
+    //   })
+    // },
     humanTime: function () {
       if (this.selectedCount === 0) {
         return moment(this.req.modified).fromNow();
@@ -165,6 +189,26 @@ export default {
       } catch (e) {
         this.$showError(e);
       }
+    },
+    getHumanSize: async function () {
+      if (this.selectedCount === 0 || !this.isListing) {
+        console.log("this.req.size:", this.req.size);
+        return filesize(this.req.size);
+      }
+
+      let sum = 0;
+      let urls = '';
+      for (let selected of this.selected) {
+        // sum += this.req.items[selected].size;
+        urls += this.req.items[selected].path + ',';
+      }
+
+      const res = await fetchURL(`/api/size?paths=${urls}`, {});
+      console.log("res", res);
+      let data = await res.json();
+      console.log("data", data);
+      console.log("data.size", data.size);
+      this.humanSize = filesize(data.size);
     },
   },
 };

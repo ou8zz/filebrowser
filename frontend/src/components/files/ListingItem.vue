@@ -24,7 +24,7 @@
     <div>
       <p class="name">{{ name }}</p>
 
-      <p v-if="isDir" class="size" data-order="-1">&mdash;</p>
+      <p v-if="isDir" class="size" data-order="-1"> {{ dirSize }} </p>
       <p v-else class="size" :data-order="humanSize()">{{ humanSize() }}</p>
 
       <p class="modified">
@@ -41,12 +41,14 @@ import { filesize } from "@/utils";
 import moment from "moment";
 import { files as api } from "@/api";
 import * as upload from "@/utils/upload";
+import { fetchURL } from "../../api/utils.js";
 
 export default {
   name: "item",
   data: function () {
     return {
       touches: 0,
+      dirSize: '-'
     };
   },
   props: [
@@ -97,6 +99,14 @@ export default {
   },
   methods: {
     ...mapMutations(["addSelected", "removeSelected", "resetSelected"]),
+    getDirSize: async function () {
+      const res = await fetchURL(`/api/size?paths=${this.path}`, {});
+      console.log("res", res);
+      let data = await res.json();
+      console.log("data", data);
+      console.log("data.size", data.size);
+      this.dirSize = filesize(data.size);
+    },
     humanSize: function () {
       return this.type == "invalid_link" ? "invalid link" : filesize(this.size);
     },
@@ -191,6 +201,11 @@ export default {
       action(overwrite, rename);
     },
     itemClick: function (event) {
+      if (this.dirSize == '-') {
+        this.dirSize = 'Loding...';
+        this.getDirSize();
+      }
+
       if (this.singleClick && !this.$store.state.multiple) this.open();
       else this.click(event);
     },

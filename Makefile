@@ -8,13 +8,20 @@ LDFLAGS += -X "$(MODULE)/version.Version=$(VERSION)" -X "$(MODULE)/version.Commi
 .PHONY: build
 build: | build-frontend build-backend ## Build binary
 
+.PHONY: dev
+dev: | build-frontend build-backend-dev ## Build binary
+
 .PHONY: build-frontend
 build-frontend: ## Build frontend
 	$Q cd frontend && npm ci && npm run build
 
+.PHONY: build-backend-dev
+build-backend-dev: ## Build backend-dev
+	$Q $(go) build -ldflags '$(LDFLAGS)' -o .
+
 .PHONY: build-backend
 build-backend: ## Build backend
-	$Q $(go) build -ldflags '$(LDFLAGS)' -o .
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o .
 
 .PHONY: test
 test: | test-frontend test-backend ## Run all tests
