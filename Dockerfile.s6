@@ -1,5 +1,8 @@
 FROM ghcr.io/linuxserver/baseimage-alpine:3.17
 
+RUN echo $'http://mirrors.aliyun.com/alpine/v3.6/main\n\
+http://mirrors.aliyun.com/alpine/v3.6/community' > /etc/apk/repositories
+
 RUN apk --update add ca-certificates \
                      mailcap \
                      curl

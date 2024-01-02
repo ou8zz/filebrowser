@@ -147,12 +147,17 @@ export default {
     //   this.editor.setTheme("ace/theme/twilight");
     // }
 
+
     // 初始化编辑器，确保dom已经渲染
     const self = this;
+    let themeVal = "vs-light";
+    if (theme == "dark") {
+        themeVal = "vs-dark";
+    }
     this.editor = monaco.editor.create(self.$refs.monacoEditor, {
       value: fileContent, // 编辑器初始显示内容
       language: 'javascript', // 支持语言
-      theme: "vs-dark", // 主题
+      theme: themeVal, // 主题
       selectOnLineNumbers: true, //显示行号
       editorOptions: self.editorOptions,
     });
