@@ -1,5 +1,5 @@
 #!/bin/sh
-echo 'version:' + $1
+echo 'version:'$1
 rm filebrowser
 make build
 
