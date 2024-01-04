@@ -17,7 +17,8 @@
 
     <!-- <form id="editor"></form> -->
     <!-- <div id="monaco-editor" ref="monacoEditor" /> -->
-    <textarea class="ww" :value="codeValue"></textarea>
+    <!-- <textarea class="ww" :value="codeValue"></textarea> -->
+    <vue-editor class="ww" v-model="codeValue" :editorToolbar="customToolbar"></vue-editor>
   </div>
 </template>
 
@@ -28,10 +29,10 @@ import { theme } from "@/utils/constants";
 import buttons from "@/utils/buttons";
 import url from "@/utils/url";
 
-import { version as ace_version } from "ace-builds";
-import ace from "ace-builds/src-min-noconflict/ace.js";
-import modelist from "ace-builds/src-min-noconflict/ext-modelist.js";
-import * as monaco from "monaco-editor/esm/vs/editor/editor.main";
+// import { version as ace_version } from "ace-builds";
+// import ace from "ace-builds/src-min-noconflict/ace.js";
+// import modelist from "ace-builds/src-min-noconflict/ext-modelist.js";
+import { VueEditor } from "vue2-editor";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
@@ -40,51 +41,21 @@ import Breadcrumbs from "@/components/Breadcrumbs.vue";
 export default {
   name: "editor",
   components: {
+    VueEditor,
     HeaderBar,
     Action,
     Breadcrumbs,
-  },
-  props: {
-    // 编辑器支持的文本格式,自行在百度上搜索
-    types: {
-      type: String,
-      default: 'json'
-    },
-    // 名称
-    name: {
-      type: String,
-      default: 'test'
-    },
-    editorOptions: {
-      type: Object,
-      default: function() {
-        return {
-          selectOnLineNumbers: true,
-          roundedSelection: false,
-          readOnly: false, // 只读
-          writeOnly: false,
-          cursorStyle: 'line', // 光标样式
-          automaticLayout: true, // 自动布局
-          glyphMargin: true, // 字形边缘
-          useTabStops: false,
-          fontSize: 32, // 字体大小
-          autoIndent: true // 自动布局
-          // quickSuggestionsDelay: 500,   //代码提示延时
-        }
-      }
-    },
-    codes: {
-      type: String,
-      default: function() {
-        return ''
-      }
-    }
   },
   data: function () {
     return {
       editor: null, // 文本编辑器
       isSave: true, // 文件改动状态，是否保存
-      codeValue: null // 保存后的文本
+      codeValue: null, // 保存后的文本
+      customToolbar: [
+        ["bold", "italic", "underline"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["code-block"]
+      ]
     };
   },
   computed: {
@@ -124,12 +95,12 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener("keydown", this.keyEvent);
-    this.editor.destroy();
+    // this.editor.destroy();
   },
   mounted: function () {
     const fileContent = this.req.content || "";
-
     this.codeValue = fileContent;
+
     // ace.config.set(
     //   "basePath",
     //   `https://cdn.jsdelivr.net/npm/ace-builds@${ace_version}/src-min-noconflict/`
@@ -148,28 +119,6 @@ export default {
     // if (theme == "dark") {
     //   this.editor.setTheme("ace/theme/twilight");
     // }
-
-    // 初始化编辑器，确保dom已经渲染
-    // const self = this;
-    // let themeVal = "vs-light";
-    // if (theme == "dark") {
-    //     themeVal = "vs-dark";
-    // }
-    // this.editor = monaco.editor.create(self.$refs.monacoEditor, {
-    //   value: fileContent, // 编辑器初始显示内容
-    //   language: 'javascript', // 支持语言
-    //   theme: themeVal, // 主题
-    //   selectOnLineNumbers: true, //显示行号
-    //   // contextmenu: false,  // 取消右击菜单
-    //   minimap:{ enabled: false, side: 'right' }, // 设置编辑器的缩略图（如：{ enabled: true, side: 'right' }）
-    //   editorOptions: self.editorOptions,
-    // });
-
-    // self.editor.onDidChangeModelContent(function(event) {
-    //   // 编辑器内容changge事件
-    //   self.codesCopy = self.editor.getValue();
-    //   self.$emit('onCodeChange', self.editor.getValue(), event);
-    // });
   },
   methods: {
     back() {
@@ -218,6 +167,6 @@ export default {
 
 .ww {
   width: 100%;
-  height: 100%;
+  height: 88%;
 }
 </style>

@@ -1,4 +1,4 @@
-# Security Policy
+<p># Security Policy
 
 ## Supported Versions
 
@@ -8,7 +8,7 @@ currently being supported with security updates.
 | Version | Supported          |
 | ------- | ------------------ |
 | 2.x     | :white_check_mark: |
-| < 2.0   | :x:                |
+| &lt; 2.0   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -23,4 +23,5 @@ When reporting an issue, where possible, please provide at least:
 
 The FileBrowser team is a volunteer-only effort, and may reach back out for clarification.
 
-> Note: Please do not open public issues for security issues, as GitHub does not provide facility for private issues, and deleting the issue makes it hard to triage/respond back to the reporter.
+&gt; Note: Please do not open public issues for security issues, as GitHub does not provide facility for private issues, and deleting the issue makes it hard to triage/respond back to the reporter.
+</p>

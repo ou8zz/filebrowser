@@ -206,9 +206,9 @@ export default {
       const res = await fetchURL(`/api/size?paths=${urls}`, {});
       console.log("res", res);
       let data = await res.json();
-      console.log("data", data);
-      console.log("data.size", data.size);
+      console.log("data.info:", data);
       this.humanSize = filesize(data.size);
+      this.dirSize = this.humanSize;
     },
   },
 };
