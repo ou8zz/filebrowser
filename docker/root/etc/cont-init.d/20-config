@@ -9,7 +9,7 @@ if [ ! -f "/config/settings.json" ]; then
 fi
 
 # permissions
-chown abc:abc \
-	/config/settings.json \
-	/database \
-	/srv
+#chown nobody:nobody \
+#	/config/settings.json \
+#	/database \
+#	/srv

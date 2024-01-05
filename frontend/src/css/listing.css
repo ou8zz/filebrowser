@@ -193,11 +193,11 @@ body.rtl #listing {
 }
 
 #listing.list .item .name {
-  width: 50%;
+  width: 45%;
 }
 
 #listing.list .item .size {
-  width: 25%;
+  width: 12%;
 }
 
 #listing .item.header {

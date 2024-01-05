@@ -1,4 +1,8 @@
 FROM alpine:latest
+
+RUN echo $'http://mirrors.aliyun.com/alpine/v3.6/main\n\
+http://mirrors.aliyun.com/alpine/v3.6/community' > /etc/apk/repositories \
+
 RUN apk --update add ca-certificates \
                      mailcap \
                      curl \

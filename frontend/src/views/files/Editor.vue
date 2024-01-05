@@ -15,10 +15,10 @@
 
     <breadcrumbs base="/files" noLink />
 
-    <!-- <form id="editor"></form> -->
+    <form id="editor"></form>
     <!-- <div id="monaco-editor" ref="monacoEditor" /> -->
     <!-- <textarea class="ww" :value="codeValue"></textarea> -->
-    <vue-editor class="ww" v-model="codeValue" :editorToolbar="customToolbar"></vue-editor>
+    <!-- <vue-editor class="ww" v-model="codeValue" :editorToolbar="customToolbar"></vue-editor> -->
   </div>
 </template>
 
@@ -29,9 +29,9 @@ import { theme } from "@/utils/constants";
 import buttons from "@/utils/buttons";
 import url from "@/utils/url";
 
-// import { version as ace_version } from "ace-builds";
-// import ace from "ace-builds/src-min-noconflict/ace.js";
-// import modelist from "ace-builds/src-min-noconflict/ext-modelist.js";
+import { version as ace_version } from "ace-builds";
+import ace from "ace-builds/src-min-noconflict/ace.js";
+import modelist from "ace-builds/src-min-noconflict/ext-modelist.js";
 import { VueEditor } from "vue2-editor";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
@@ -41,7 +41,7 @@ import Breadcrumbs from "@/components/Breadcrumbs.vue";
 export default {
   name: "editor",
   components: {
-    VueEditor,
+    // VueEditor,
     HeaderBar,
     Action,
     Breadcrumbs,
@@ -51,11 +51,11 @@ export default {
       editor: null, // 文本编辑器
       isSave: true, // 文件改动状态，是否保存
       codeValue: null, // 保存后的文本
-      customToolbar: [
-        ["bold", "italic", "underline"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        ["code-block"]
-      ]
+      // customToolbar: [
+      //   ["bold", "italic", "underline"],
+      //   [{ list: "ordered" }, { list: "bullet" }],
+      //   ["code-block"]
+      // ]
     };
   },
   computed: {
@@ -99,26 +99,26 @@ export default {
   },
   mounted: function () {
     const fileContent = this.req.content || "";
-    this.codeValue = fileContent;
+    // this.codeValue = fileContent;
 
-    // ace.config.set(
-    //   "basePath",
-    //   `https://cdn.jsdelivr.net/npm/ace-builds@${ace_version}/src-min-noconflict/`
-    // );
+    ace.config.set(
+      "basePath",
+      `https://cdn.jsdelivr.net/npm/ace-builds@${ace_version}/src-min-noconflict/`
+    );
 
-    // this.editor = ace.edit("editor", {
-    //   value: fileContent,
-    //   showPrintMargin: false,
-    //   readOnly: this.req.type === "textImmutable",
-    //   theme: "ace/theme/chrome",
-    //   mode: modelist.getModeForPath(this.req.name).mode,
-    //   wrap: true,
-    //   // keyboardHandler: "edit",
-    // });
+    this.editor = ace.edit("editor", {
+      value: fileContent,
+      showPrintMargin: false,
+      readOnly: this.req.type === "textImmutable",
+      theme: "ace/theme/chrome",
+      mode: modelist.getModeForPath(this.req.name).mode,
+      wrap: true,
+      // keyboardHandler: "edit",
+    });
 
-    // if (theme == "dark") {
-    //   this.editor.setTheme("ace/theme/twilight");
-    // }
+    if (theme == "dark") {
+      this.editor.setTheme("ace/theme/twilight");
+    }
   },
   methods: {
     back() {
@@ -142,7 +142,7 @@ export default {
       buttons.loading("save");
 
       try {
-        await api.put(this.$route.path, this.codeValue);
+        await api.put(this.$route.path, this.editor.getValue());
         buttons.success(button);
       } catch (e) {
         buttons.done(button);

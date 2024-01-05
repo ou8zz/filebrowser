@@ -170,6 +170,14 @@
                 <i class="material-icons">{{ nameIcon }}</i>
               </p>
 
+              <p class="size" tabindex="0" :title="$t('files.owner')" >
+                <span>{{ $t("files.owner") }}</span>
+              </p>
+
+              <p class="size" tabindex="0" :title="$t('files.perm')" >
+                <span>{{ $t("files.perm") }}</span>
+              </p>
+
               <p
                 :class="{ active: sizeSorted }"
                 class="size"
@@ -205,6 +213,8 @@
             :key="base64(item.name)"
             v-bind:index="item.index"
             v-bind:name="item.name"
+            v-bind:owner="item.owner"
+            v-bind:perm="item.perm"
             v-bind:isDir="item.isDir"
             v-bind:url="item.url"
             v-bind:modified="item.modified"
@@ -222,6 +232,8 @@
             :key="base64(item.name)"
             v-bind:index="item.index"
             v-bind:name="item.name"
+            v-bind:owner="item.owner"
+            v-bind:perm="item.perm"
             v-bind:isDir="item.isDir"
             v-bind:url="item.url"
             v-bind:modified="item.modified"

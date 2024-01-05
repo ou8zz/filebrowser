@@ -71,14 +71,6 @@ var resourceGetHandler = withUser(func(w http.ResponseWriter, r *http.Request, d
   if file.IsDir {
     file.Listing.Sorting = d.user.Sorting
     file.Listing.ApplySort()
-    //for i, v := range file.Items {
-    //  ds, err := DirSizeB(v.RealPath())
-    //  if err != nil {
-    //    fmt.Printf("DirSizeB error:%v\n", err)
-    //  } else {
-    //    file.Items[i].Size = ds
-    //  }
-    //}
     return renderJSON(w, r, file)
   }
 

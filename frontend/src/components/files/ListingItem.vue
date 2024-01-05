@@ -23,6 +23,8 @@
 
     <div>
       <p class="name">{{ name }}</p>
+      <p class="size">{{ owner }}</p>
+      <p class="size">{{ perm }}</p>
 
       <p v-if="isDir" class="size" data-order="-1"> {{ dirSize }} </p>
       <p v-else class="size" :data-order="humanSize()">{{ humanSize() }}</p>
@@ -53,6 +55,8 @@ export default {
   },
   props: [
     "name",
+    "owner",
+    "perm",
     "isDir",
     "url",
     "type",
