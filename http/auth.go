@@ -101,15 +101,23 @@ func withAdmin(fn handleFunc) handleFunc {
   })
 }
 
+var loginCount = 0
+var loginLockTime = time.Now()
+
 func loginHandler(tokenExpireTime time.Duration) handleFunc {
   return func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
     auther, err := d.store.Auth.Get(d.settings.AuthMethod)
     if err != nil {
       return http.StatusInternalServerError, err
     }
-
+    // 连续错误5次锁定请求1小时
+    if loginCount > 5 && loginLockTime.After(time.Now().Add(-time.Hour)) {
+      return http.StatusLocked, err
+    }
     user, err := auther.Auth(r, d.store.Users, d.settings, d.server)
     if err == os.ErrPermission {
+      loginCount++
+      loginLockTime = time.Now()
       return http.StatusForbidden, nil
     } else if err != nil {
       return http.StatusInternalServerError, err
