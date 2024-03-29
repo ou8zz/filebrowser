@@ -2,16 +2,16 @@ FROM alpine:latest
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
-RUN apk --update add ca-certificates \
-                     mailcap \
-                     curl \
-                     jq
-
-COPY healthcheck.sh /healthcheck.sh
-RUN chmod +x /healthcheck.sh  # Make the script executable
-
-HEALTHCHECK --start-period=2s --interval=5s --timeout=3s \
-    CMD /healthcheck.sh || exit 1
+#RUN apk --update add ca-certificates \
+#                     mailcap \
+#                     curl \
+#                     jq
+#
+#COPY healthcheck.sh /healthcheck.sh
+#RUN chmod +x /healthcheck.sh  # Make the script executable
+#
+#HEALTHCHECK --start-period=2s --interval=5s --timeout=3s \
+#    CMD /healthcheck.sh || exit 1
 
 VOLUME /srv
 EXPOSE 80
