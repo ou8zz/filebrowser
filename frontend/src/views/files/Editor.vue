@@ -15,10 +15,9 @@
 
     <breadcrumbs base="/files" noLink />
 
+    <button @click="switchAce">切换编辑器</button>
     <form id="editor"></form>
-    <!-- <div id="monaco-editor" ref="monacoEditor" /> -->
-    <!-- <textarea class="ww" :value="codeValue"></textarea> -->
-    <!-- <vue-editor class="ww" v-model="codeValue" :editorToolbar="customToolbar"></vue-editor> -->
+    <textarea v-if="isAce==false" class="ww" v-model="codeValue"></textarea>
   </div>
 </template>
 
@@ -32,7 +31,6 @@ import url from "@/utils/url";
 import { version as ace_version } from "ace-builds";
 import ace from "ace-builds/src-min-noconflict/ace.js";
 import modelist from "ace-builds/src-min-noconflict/ext-modelist.js";
-import { VueEditor } from "vue2-editor";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
@@ -41,21 +39,16 @@ import Breadcrumbs from "@/components/Breadcrumbs.vue";
 export default {
   name: "editor",
   components: {
-    // VueEditor,
     HeaderBar,
     Action,
     Breadcrumbs,
   },
   data: function () {
     return {
+      isAce: true,  // 默认Ace
       editor: null, // 文本编辑器
       isSave: true, // 文件改动状态，是否保存
       codeValue: null, // 保存后的文本
-      // customToolbar: [
-      //   ["bold", "italic", "underline"],
-      //   [{ list: "ordered" }, { list: "bullet" }],
-      //   ["code-block"]
-      // ]
     };
   },
   computed: {
@@ -95,32 +88,49 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener("keydown", this.keyEvent);
-    // this.editor.destroy();
+    this.editor.destroy();
   },
   mounted: function () {
     const fileContent = this.req.content || "";
-    // this.codeValue = fileContent;
-
-    ace.config.set(
-      "basePath",
-      `https://cdn.jsdelivr.net/npm/ace-builds@${ace_version}/src-min-noconflict/`
-    );
-
-    this.editor = ace.edit("editor", {
-      value: fileContent,
-      showPrintMargin: false,
-      readOnly: this.req.type === "textImmutable",
-      theme: "ace/theme/chrome",
-      mode: modelist.getModeForPath(this.req.name).mode,
-      wrap: true,
-      // keyboardHandler: "edit",
-    });
-
-    if (theme == "dark") {
-      this.editor.setTheme("ace/theme/twilight");
+    if (this.isAce) {
+      this.initAce();
+    } else {
+      this.codeValue = fileContent;
     }
   },
   methods: {
+    switchAce() {
+      const fileContent = this.req.content || "";
+      if(this.isAce) {
+        this.isAce = false;
+        document.getElementById("editor").style.display = 'none';
+        this.codeValue = fileContent;
+      } else {
+        this.isAce = true;
+        document.getElementById("editor").style.display = 'block';
+      }
+    },
+    initAce() {
+      const fileContent = this.req.content || "";
+      ace.config.set(
+        "basePath",
+        `https://cdn.jsdelivr.net/npm/ace-builds@${ace_version}/src-min-noconflict/`
+      );
+
+      this.editor = ace.edit("editor", {
+        value: fileContent,
+        showPrintMargin: false,
+        readOnly: this.req.type === "textImmutable",
+        theme: "ace/theme/chrome",
+        mode: modelist.getModeForPath(this.req.name).mode,
+        wrap: true,
+        keyboardHandler: "ace/keyboard/vscode",
+      });
+
+      if (theme == "dark") {
+        this.editor.setTheme("ace/theme/monokai");
+      }
+    },
     back() {
       let uri = url.removeLastDir(this.$route.path) + "/";
       this.$router.push({ path: uri });
@@ -142,7 +152,13 @@ export default {
       buttons.loading("save");
 
       try {
-        await api.put(this.$route.path, this.editor.getValue());
+        let val = this.editor.getValue();
+    
+        if(!this.isAce) {
+          val = this.codeValue;
+              console.log("save ace", this.isAce, val);
+        }
+        await api.put(this.$route.path, val);
         buttons.success(button);
       } catch (e) {
         buttons.done(button);
@@ -167,6 +183,6 @@ export default {
 
 .ww {
   width: 100%;
-  height: 88%;
+  height: 87%;
 }
 </style>
