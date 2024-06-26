@@ -15,7 +15,7 @@
 
     <breadcrumbs base="/files" noLink />
 
-    <button @click="switchAce">切换编辑器</button>
+    <button @click="switchAce" class="switch-btn">切换编辑器</button>
     <form id="editor"></form>
     <textarea v-if="isAce==false" class="ww" v-model="codeValue"></textarea>
   </div>
@@ -176,13 +176,18 @@ export default {
 </script>
 
 <style scoped>
-#monaco-editor {
-  width: 100%;
-  height: 100%;
+.switch-btn {
+  font-size: 12px;
+  background-color: #272822;
+  color: #F8F8F2;
+  border: 0px;
 }
 
 .ww {
   width: 100%;
-  height: 87%;
+  height: 100vh;
+  background-color: #272822;
+  color: #F8F8F2;
+  font: 12px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace;
 }
 </style>
