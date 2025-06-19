@@ -13,7 +13,7 @@ dev: | build-frontend build-backend-dev ## Build binary
 
 .PHONY: build-frontend
 build-frontend: ## Build frontend
-	$Q cd frontend && npm ci && npm run build
+	$Q cd frontend && pnpm install --frozen-lockfile && pnpm run build
 
 .PHONY: build-backend-dev
 build-backend-dev: ## Build backend-dev
@@ -28,17 +28,18 @@ test: | test-frontend test-backend ## Run all tests
 
 .PHONY: test-frontend
 test-frontend: ## Run frontend tests
+	$Q cd frontend && pnpm install --frozen-lockfile && pnpm run typecheck
 
 .PHONY: test-backend
 test-backend: ## Run backend tests
 	$Q $(go) test -v ./...
 
 .PHONY: lint
-lint: lint-frontend lint-backend lint-commits ## Run all linters
+lint: lint-frontend lint-backend ## Run all linters
 
 .PHONY: lint-frontend
 lint-frontend: ## Run frontend linters
-	$Q cd frontend && npm ci && npm run lint
+	$Q cd frontend && pnpm install --frozen-lockfile && pnpm run lint
 
 .PHONY: lint-backend
 lint-backend: | $(golangci-lint) ## Run backend linters

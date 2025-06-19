@@ -1,6 +1,7 @@
 {
   "buttons": {
     "cancel": "Avbryt",
+    "clear": "Rensa",
     "close": "Stäng",
     "copy": "Kopiera",
     "copyFile": "Kopiera fil",
@@ -46,7 +47,6 @@
   },
   "files": {
     "body": "Huvud",
-    "clear": "Rensa",
     "closePreview": "Stäng förhands granskningen",
     "files": "Filer",
     "folders": "Mappar",
@@ -75,31 +75,6 @@
     "f1": "denna information",
     "f2": "ändra namnet på filen",
     "help": "Hjälp"
-  },
-  "languages": {
-    "he": "עברית",
-    "hu": "Magyar",
-    "ar": "العربية",
-    "de": "Deutsch",
-    "en": "English",
-    "es": "Español",
-    "fr": "Français",
-    "is": "",
-    "it": "Italiano",
-    "ja": "日本語",
-    "ko": "한국어",
-    "nlBE": "",
-    "pl": "Polski",
-    "pt": "Português",
-    "ptBR": "Português (Brasil)",
-    "ro": "",
-    "ru": "Русский",
-    "sk": "Slovenčina",
-    "svSE": "",
-    "tr" : "Türkçe",
-    "ua": "Українська",
-    "zhCN": "中文 (简体)",
-    "zhTW": "中文 (繁體)"
   },
   "login": {
     "createAnAccount": "Skapa ett konto",

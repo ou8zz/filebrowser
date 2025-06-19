@@ -1,6 +1,7 @@
 {
   "buttons": {
     "cancel": "Hætta við",
+    "clear": "Hreinsa",
     "close": "Loka",
     "copy": "Afrita",
     "copyFile": "Afrita skjal",
@@ -46,7 +47,6 @@
   },
   "files": {
     "body": "Meginmál",
-    "clear": "Hreinsa",
     "closePreview": "Loka forskoðun",
     "files": "Skjöl",
     "folders": "Möppur",
@@ -75,31 +75,6 @@
     "f1": "þessar upplýsingar",
     "f2": "endurnefna skjal",
     "help": "Hjálp"
-  },
-  "languages": {
-    "he": "עברית",
-    "hu": "Magyar",
-    "ar": "العربية",
-    "de": "Deutsch",
-    "en": "English",
-    "es": "Español",
-    "fr": "Français",
-    "is": "",
-    "it": "Italiano",
-    "ja": "日本語",
-    "ko": "한국어",
-    "nlBE": "",
-    "pl": "Polski",
-    "pt": "Português",
-    "ptBR": "Português (Brasil)",
-    "ro": "",
-    "ru": "Русский",
-    "sk": "Slovenčina",
-    "svSE": "",
-    "tr" : "Türkçe",
-    "ua": "Українська",
-    "zhCN": "中文 (简体)",
-    "zhTW": "中文 (繁體)"
   },
   "login": {
     "createAnAccount": "Búa til nýjan aðgang",

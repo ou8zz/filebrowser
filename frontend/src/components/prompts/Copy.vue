@@ -6,13 +6,16 @@
 
     <div class="card-content">
       <p>{{ $t("prompts.copyMessage") }}</p>
-      <file-list ref="fileList" @update:selected="(val) => (dest = val)">
-      </file-list>
+      <file-list
+        ref="fileList"
+        @update:selected="(val) => (dest = val)"
+        tabindex="1"
+      />
     </div>
 
     <div
       class="card-action"
-      style="display: flex; align-items: center; justify-content: space-between;"
+      style="display: flex; align-items: center; justify-content: space-between"
     >
       <template v-if="user.perm.create">
         <button
@@ -20,7 +23,7 @@
           @click="$refs.fileList.createDir()"
           :aria-label="$t('sidebar.newFolder')"
           :title="$t('sidebar.newFolder')"
-          style="justify-self: left;"
+          style="justify-self: left"
         >
           <span>{{ $t("sidebar.newFolder") }}</span>
         </button>
@@ -28,17 +31,20 @@
       <div>
         <button
           class="button button--flat button--grey"
-          @click="$store.commit('closeHovers')"
+          @click="closeHovers"
           :aria-label="$t('buttons.cancel')"
           :title="$t('buttons.cancel')"
+          tabindex="3"
         >
           {{ $t("buttons.cancel") }}
         </button>
         <button
+          id="focus-prompt"
           class="button button--flat"
           @click="copy"
           :aria-label="$t('buttons.copy')"
           :title="$t('buttons.copy')"
+          tabindex="2"
         >
           {{ $t("buttons.copy") }}
         </button>
@@ -48,7 +54,10 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapActions, mapState, mapWritableState } from "pinia";
+import { useFileStore } from "@/stores/file";
+import { useLayoutStore } from "@/stores/layout";
+import { useAuthStore } from "@/stores/auth";
 import FileList from "./FileList.vue";
 import { files as api } from "@/api";
 import buttons from "@/utils/buttons";
@@ -63,14 +72,20 @@ export default {
       dest: null,
     };
   },
-  computed: mapState(["req", "selected", "user"]),
+  inject: ["$showError"],
+  computed: {
+    ...mapState(useFileStore, ["req", "selected"]),
+    ...mapState(useAuthStore, ["user"]),
+    ...mapWritableState(useFileStore, ["reload"]),
+  },
   methods: {
+    ...mapActions(useLayoutStore, ["showHover", "closeHovers"]),
     copy: async function (event) {
       event.preventDefault();
-      let items = [];
+      const items = [];
 
       // Create a new promise for each file.
-      for (let item of this.selected) {
+      for (const item of this.selected) {
         items.push({
           from: this.req.items[item].url,
           to: this.dest + encodeURIComponent(this.req.items[item].name),
@@ -78,7 +93,7 @@ export default {
         });
       }
 
-      let action = async (overwrite, rename) => {
+      const action = async (overwrite, rename) => {
         buttons.loading("copy");
 
         await api
@@ -87,7 +102,7 @@ export default {
             buttons.success("copy");
 
             if (this.$route.path === this.dest) {
-              this.$store.commit("setReload", true);
+              this.reload = true;
 
               return;
             }
@@ -101,27 +116,27 @@ export default {
       };
 
       if (this.$route.path === this.dest) {
-        this.$store.commit("closeHovers");
+        this.closeHovers();
         action(false, true);
 
         return;
       }
 
-      let dstItems = (await api.fetch(this.dest)).items;
-      let conflict = upload.checkConflict(items, dstItems);
+      const dstItems = (await api.fetch(this.dest)).items;
+      const conflict = upload.checkConflict(items, dstItems);
 
       let overwrite = false;
       let rename = false;
 
       if (conflict) {
-        this.$store.commit("showHover", {
+        this.showHover({
           prompt: "replace-rename",
           confirm: (event, option) => {
             overwrite = option == "overwrite";
             rename = option == "rename";
 
             event.preventDefault();
-            this.$store.commit("closeHovers");
+            this.closeHovers();
             action(overwrite, rename);
           },
         });

@@ -1,7 +1,9 @@
 {
   "buttons": {
     "cancel": "Annulla",
+    "clear": "Cancella",
     "close": "Chiudi",
+    "continue": "Continua",
     "copy": "Copia",
     "copyFile": "Copia file",
     "copyToClipboard": "Copia negli appunti",
@@ -46,7 +48,6 @@
   },
   "files": {
     "body": "Contenuto",
-    "clear": "Cancella",
     "closePreview": "Chiudi anteprima",
     "files": "File",
     "folders": "Cartelle",
@@ -75,31 +76,6 @@
     "f1": "questo pannello",
     "f2": "rinomina un file",
     "help": "Aiuto"
-  },
-  "languages": {
-    "he": "עברית",
-    "hu": "Magyar",
-    "ar": "العربية",
-    "de": "Deutsch",
-    "en": "English",
-    "es": "Español",
-    "fr": "Français",
-    "is": "",
-    "it": "Italiano",
-    "ja": "日本語",
-    "ko": "한국어",
-    "nlBE": "",
-    "pl": "Polski",
-    "pt": "Português",
-    "ptBR": "Português (Brasil)",
-    "ro": "",
-    "ru": "Русский",
-    "sk": "Slovenčina",
-    "svSE": "",
-    "tr" : "Türkçe",
-    "ua": "Українська",
-    "zhCN": "中文 (简体)",
-    "zhTW": "中文 (繁體)"
   },
   "login": {
     "createAnAccount": "Crea un account",

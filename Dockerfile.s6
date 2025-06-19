@@ -1,19 +1,23 @@
-FROM ghcr.io/linuxserver/baseimage-alpine:3.17
+FROM ghcr.io/linuxserver/baseimage-alpine:3.22
 
-RUN echo $'http://mirrors.aliyun.com/alpine/v3.6/main\n\
-http://mirrors.aliyun.com/alpine/v3.6/community' > /etc/apk/repositories
+RUN apk update && \
+  apk --no-cache add ca-certificates mailcap curl jq
 
-RUN apk --update add ca-certificates \
-                     mailcap \
-                     curl
+# Make user and create necessary directories
+RUN mkdir -p /config /database /srv
+#  chown -R abc:abc /config /database /srv
 
-HEALTHCHECK --start-period=2s --interval=5s --timeout=3s \
-  CMD curl -f http://localhost/health || exit 1
+# Copy files and set permissions
+COPY filebrowser /bin/filebrowser
+COPY docker/common/ /
+COPY docker/s6/ /
 
-# copy local files
-COPY docker/root/ /
-COPY filebrowser /usr/bin/filebrowser
+RUN chown -R abc:abc /bin/filebrowser /defaults healthcheck.sh
 
-# ports and volumes
+# Define healthcheck script
+HEALTHCHECK --start-period=2s --interval=5s --timeout=3s CMD /healthcheck.sh
+
+# Set the volumes and exposed ports
 VOLUME /srv /config /database
+
 EXPOSE 80

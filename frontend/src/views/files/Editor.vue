@@ -1,177 +1,204 @@
 <template>
-  <div id="editor-container">
+  <div id="editor-container" @wheel.prevent.stop>
     <header-bar>
-      <action icon="close" :label="$t('buttons.close')" @action="close()" />
-      <title>{{ req.name }}</title>
+      <action icon="close" :label="t('buttons.close')" @action="close()" />
+      <title>{{ fileStore.req?.name ?? "" }}</title>
 
       <action
-        v-if="user.perm.modify"
+        v-if="authStore.user?.perm.modify"
         id="save-button"
         icon="save"
-        :label="$t('buttons.save')"
+        :label="t('buttons.save')"
         @action="save()"
+      />
+
+      <action
+        icon="preview"
+        :label="t('buttons.preview')"
+        @action="preview()"
+        v-show="isMarkdownFile"
       />
     </header-bar>
 
-    <breadcrumbs base="/files" noLink />
+    <Breadcrumbs base="/files" noLink />
+
+    <!-- preview container -->
+    <div
+      v-show="isPreview && isMarkdownFile"
+      id="preview-container"
+      class="md_preview"
+      v-html="previewContent"
+    ></div>
 
     <button @click="switchAce" class="switch-btn">切换编辑器</button>
-    <form id="editor"></form>
+    <form v-show="!isPreview || !isMarkdownFile" id="editor"></form>
     <textarea v-if="isAce==false" class="ww" v-model="codeValue"></textarea>
   </div>
 </template>
 
-<script>
-import { mapState } from "vuex";
+<script setup lang="ts">
 import { files as api } from "@/api";
-import { theme } from "@/utils/constants";
 import buttons from "@/utils/buttons";
 import url from "@/utils/url";
-
-import { version as ace_version } from "ace-builds";
-import ace from "ace-builds/src-min-noconflict/ace.js";
-import modelist from "ace-builds/src-min-noconflict/ext-modelist.js";
+import ace, { Ace, version as ace_version } from "ace-builds";
+import modelist from "ace-builds/src-noconflict/ext-modelist";
+import "ace-builds/src-noconflict/ext-language_tools";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
+import { useAuthStore } from "@/stores/auth";
+import { useFileStore } from "@/stores/file";
+import { useLayoutStore } from "@/stores/layout";
+import { inject, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { getTheme } from "@/utils/theme";
+import { marked } from "marked";
 
-export default {
-  name: "editor",
-  components: {
-    HeaderBar,
-    Action,
-    Breadcrumbs,
-  },
-  data: function () {
-    return {
-      isAce: true,  // 默认Ace
-      editor: null, // 文本编辑器
-      isSave: true, // 文件改动状态，是否保存
-      codeValue: null, // 保存后的文本
-    };
-  },
-  computed: {
-    ...mapState(["req", "user"]),
-    breadcrumbs() {
-      let parts = this.$route.path.split("/");
+const $showError = inject<IToastError>("$showError")!;
 
-      if (parts[0] === "") {
-        parts.shift();
-      }
+const fileStore = useFileStore();
+const authStore = useAuthStore();
+const layoutStore = useLayoutStore();
 
-      if (parts[parts.length - 1] === "") {
-        parts.pop();
-      }
+const { t } = useI18n();
 
-      let breadcrumbs = [];
+const route = useRoute();
+const router = useRouter();
 
-      for (let i = 0; i < parts.length; i++) {
-        breadcrumbs.push({ name: decodeURIComponent(parts[i]) });
-      }
+const editor = ref<Ace.Editor | null>(null);
 
-      breadcrumbs.shift();
+const isAce = ref(true);
+const codeValue = ref("");
+const isPreview = ref(false);
+const previewContent = ref("");
+const isMarkdownFile =
+  fileStore.req?.name.endsWith(".md") ||
+  fileStore.req?.name.endsWith(".markdown");
 
-      if (breadcrumbs.length > 3) {
-        while (breadcrumbs.length !== 4) {
-          breadcrumbs.shift();
-        }
+onMounted(() => {
+  window.addEventListener("keydown", keyEvent);
+  window.addEventListener("wheel", handleScroll);
 
-        breadcrumbs[0].name = "...";
-      }
+  const fileContent = fileStore.req?.content || "";
 
-      return breadcrumbs;
-    },
-  },
-  created() {
-    window.addEventListener("keydown", this.keyEvent);
-  },
-  beforeDestroy() {
-    window.removeEventListener("keydown", this.keyEvent);
-    this.editor.destroy();
-  },
-  mounted: function () {
-    const fileContent = this.req.content || "";
-    if (this.isAce) {
-      this.initAce();
-    } else {
-      this.codeValue = fileContent;
-    }
-  },
-  methods: {
-    switchAce() {
-      const fileContent = this.req.content || "";
-      if(this.isAce) {
-        this.isAce = false;
-        document.getElementById("editor").style.display = 'none';
-        this.codeValue = fileContent;
-      } else {
-        this.isAce = true;
-        document.getElementById("editor").style.display = 'block';
-      }
-    },
-    initAce() {
-      const fileContent = this.req.content || "";
-      ace.config.set(
-        "basePath",
-        `https://cdn.jsdelivr.net/npm/ace-builds@${ace_version}/src-min-noconflict/`
-      );
-
-      this.editor = ace.edit("editor", {
-        value: fileContent,
-        showPrintMargin: false,
-        readOnly: this.req.type === "textImmutable",
-        theme: "ace/theme/chrome",
-        mode: modelist.getModeForPath(this.req.name).mode,
-        wrap: true,
-        keyboardHandler: "ace/keyboard/vscode",
-      });
-
-      if (theme == "dark") {
-        this.editor.setTheme("ace/theme/monokai");
-      }
-    },
-    back() {
-      let uri = url.removeLastDir(this.$route.path) + "/";
-      this.$router.push({ path: uri });
-    },
-    keyEvent(event) {
-      if (!event.ctrlKey && !event.metaKey) {
-        return;
-      }
-
-      if (String.fromCharCode(event.which).toLowerCase() !== "s") {
-        return;
-      }
-
-      event.preventDefault();
-      this.save();
-    },
-    async save() {
-      const button = "save";
-      buttons.loading("save");
-
+  watchEffect(async () => {
+    if (isMarkdownFile && isPreview.value) {
+      const new_value = editor.value?.getValue() || "";
       try {
-        let val = this.editor.getValue();
-    
-        if(!this.isAce) {
-          val = this.codeValue;
-              console.log("save ace", this.isAce, val);
-        }
-        await api.put(this.$route.path, val);
-        buttons.success(button);
-      } catch (e) {
-        buttons.done(button);
-        this.$showError(e);
+        previewContent.value = await marked(new_value);
+      } catch (error) {
+        console.error("Failed to convert content to HTML:", error);
+        previewContent.value = "";
       }
-    },
-    close() {
-      this.$store.commit("updateRequest", {});
 
-      let uri = url.removeLastDir(this.$route.path) + "/";
-      this.$router.push({ path: uri });
-    },
-  },
+      const previewContainer = document.getElementById("preview-container");
+      if (previewContainer) {
+        previewContainer.addEventListener("wheel", handleScroll, {
+          capture: true,
+        });
+      }
+    }
+  });
+
+  ace.config.set(
+    "basePath",
+    `https://cdn.jsdelivr.net/npm/ace-builds@${ace_version}/src-min-noconflict/`
+  );
+
+  editor.value = ace.edit("editor", {
+    value: fileContent,
+    showPrintMargin: false,
+    readOnly: fileStore.req?.type === "textImmutable",
+    theme: "ace/theme/chrome",
+    mode: modelist.getModeForPath(fileStore.req!.name).mode,
+    wrap: true,
+    enableBasicAutocompletion: true,
+    enableLiveAutocompletion: true,
+    enableSnippets: true,
+  });
+
+  if (getTheme() === "dark") {
+    editor.value!.setTheme("ace/theme/monokai");
+  }
+
+  editor.value.focus();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", keyEvent);
+  window.removeEventListener("wheel", handleScroll);
+  editor.value?.destroy();
+});
+
+const switchAce = () => {
+  const fileContent = fileStore.req?.content || "";
+  isAce.value = !isAce.value;
+  if(isAce) {
+    isPreview.value = false;
+    codeValue.value = fileContent;
+  } else {
+    isPreview.value = true;
+  }
+};
+
+const keyEvent = (event: KeyboardEvent) => {
+  if (event.code === "Escape") {
+    close();
+  }
+
+  if (!event.ctrlKey && !event.metaKey) {
+    return;
+  }
+
+  if (event.key !== "s") {
+    return;
+  }
+
+  event.preventDefault();
+  save();
+};
+
+const handleScroll = (event: WheelEvent) => {
+  const editorContainer = document.getElementById("preview-container");
+  if (editorContainer) {
+    editorContainer.scrollTop += event.deltaY;
+  }
+};
+
+const save = async () => {
+  const button = "save";
+  buttons.loading("save");
+
+  try {
+    let val = editor.value?.getValue();
+    if (!isAce.value) {
+       val = codeValue.value;
+       console.log("save ace:", isAce, val);
+    }
+    await api.put(route.path, val);
+    editor.value?.session.getUndoManager().markClean();
+    buttons.success(button);
+  } catch (e: any) {
+    buttons.done(button);
+    $showError(e);
+  }
+};
+const close = () => {
+  if (!editor.value?.session.getUndoManager().isClean()) {
+    layoutStore.showHover("discardEditorChanges");
+    return;
+  }
+
+  fileStore.updateRequest(null);
+
+  const uri = url.removeLastDir(route.path) + "/";
+  router.push({ path: uri });
+};
+
+const preview = () => {
+  isPreview.value = !isPreview.value;
 };
 </script>
 
@@ -184,7 +211,7 @@ export default {
 }
 
 .ww {
-  width: 100%;
+  width: 100vw;
   height: 100vh;
   background-color: #272822;
   color: #F8F8F2;

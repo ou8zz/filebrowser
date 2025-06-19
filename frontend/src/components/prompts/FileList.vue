@@ -25,7 +25,10 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState } from "pinia";
+import { useAuthStore } from "@/stores/auth";
+import { useFileStore } from "@/stores/file";
+
 import url from "@/utils/url";
 import { files } from "@/api";
 
@@ -42,8 +45,10 @@ export default {
       current: window.location.pathname,
     };
   },
+  inject: ["$showError"],
   computed: {
-    ...mapState(["req", "user"]),
+    ...mapState(useAuthStore, ["user"]),
+    ...mapState(useFileStore, ["req"]),
     nav() {
       return decodeURIComponent(this.current);
     },
@@ -75,7 +80,7 @@ export default {
 
       // Otherwise we add every directory to the
       // move options.
-      for (let item of req.items) {
+      for (const item of req.items) {
         if (!item.isDir) continue;
 
         this.items.push({
@@ -88,12 +93,12 @@ export default {
       // Retrieves the URL of the directory the user
       // just clicked in and fill the options with its
       // content.
-      let uri = event.currentTarget.dataset.url;
+      const uri = event.currentTarget.dataset.url;
 
       files.fetch(uri).then(this.fillOptions).catch(this.$showError);
     },
     touchstart(event) {
-      let url = event.currentTarget.dataset.url;
+      const url = event.currentTarget.dataset.url;
 
       // In 300 milliseconds, we shall reset the count.
       setTimeout(() => {

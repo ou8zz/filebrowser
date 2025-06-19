@@ -1,6 +1,9 @@
 package http
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/filebrowser/filebrowser/v2/files"
 )
@@ -29,7 +33,62 @@ type DocumentKeyMappingRequest struct {
 	Path string `json:"path"`
 }
 
-// onlyOfficeMappingHandler handles storing document key to file path mappings
+// OnlyOfficeConfigRequest represents the request to get OnlyOffice editor configuration
+type OnlyOfficeConfigRequest struct {
+	FilePath     string `json:"filePath"`
+	FileName     string `json:"fileName"`
+	FileModified string `json:"fileModified"`
+	UserID       int    `json:"userId"`
+	Username     string `json:"username"`
+	Auth         string `json:"auth"`
+}
+
+// OnlyOfficeConfig represents the complete OnlyOffice editor configuration
+type OnlyOfficeConfig struct {
+	DocumentType string                 `json:"documentType"`
+	Document     OnlyOfficeDocument     `json:"document"`
+	EditorConfig OnlyOfficeEditorConfig `json:"editorConfig"`
+	Token        string                 `json:"token"`
+}
+
+type OnlyOfficeDocument struct {
+	Key         string                   `json:"key"`
+	Title       string                   `json:"title"`
+	URL         string                   `json:"url"`
+	FileType    string                   `json:"fileType"`
+	Permissions OnlyOfficeDocPermissions `json:"permissions"`
+}
+
+type OnlyOfficeDocPermissions struct {
+	Edit     bool `json:"edit"`
+	Download bool `json:"download"`
+	Print    bool `json:"print"`
+	Review   bool `json:"review"`
+	Comment  bool `json:"comment"`
+}
+
+type OnlyOfficeEditorConfig struct {
+	Mode          string                  `json:"mode"`
+	Lang          string                  `json:"lang"`
+	User          OnlyOfficeUser          `json:"user"`
+	Customization OnlyOfficeCustomization `json:"customization"`
+	CallbackURL   string                  `json:"callbackUrl"`
+}
+
+type OnlyOfficeUser struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type OnlyOfficeCustomization struct {
+	Autosave  bool `json:"autosave"`
+	Forcesave bool `json:"forcesave"`
+}
+
+const jwtSecret = "123456B"
+const baseHost = "http://172.16.14.250:8080"
+
+// onlyOfficeMappingHandler handles OnlyOffice editor configuration requests
 func onlyOfficeMappingHandler(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
 	// Add CORS headers for OnlyOffice integration
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -46,30 +105,176 @@ func onlyOfficeMappingHandler(w http.ResponseWriter, r *http.Request, d *data) (
 		return http.StatusMethodNotAllowed, fmt.Errorf("method not allowed")
 	}
 
-	// Parse the mapping request
+	// Parse the configuration request
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return http.StatusBadRequest, fmt.Errorf("failed to read request body: %v", err)
 	}
 	defer r.Body.Close()
 
-	var mappingReq DocumentKeyMappingRequest
-	if err := json.Unmarshal(body, &mappingReq); err != nil {
-		return http.StatusBadRequest, fmt.Errorf("failed to parse mapping request: %v", err)
+	var configReq OnlyOfficeConfigRequest
+	if err := json.Unmarshal(body, &configReq); err != nil {
+		return http.StatusBadRequest, fmt.Errorf("failed to parse config request: %v", err)
+	}
+	cookie, _ := r.Cookie("auth")
+	if cookie != nil && strings.Count(cookie.Value, ".") == 2 {
+		configReq.Auth = strings.Replace(cookie.Value, "auth: ", "", 1)
 	}
 
-	// Store the mapping
-	documentKeyMapping[mappingReq.Key] = mappingReq.Path
-	fmt.Printf("Stored document key mapping: %s -> %s\n", mappingReq.Key, mappingReq.Path)
-
-	// Return success response
-	response := map[string]interface{}{
-		"success": true,
-		"message": "Document key mapping stored successfully",
+	// Generate OnlyOffice configuration
+	config, err := generateOnlyOfficeConfig(configReq, d)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("failed to generate config: %v", err)
 	}
+
+	// Store the document key mapping
+	documentKeyMapping[config.Document.Key] = configReq.FilePath
+	fmt.Printf("Stored document key mapping: %s -> %s\n", config.Document.Key, configReq.FilePath)
 
 	w.Header().Set("Content-Type", "application/json")
-	return 0, json.NewEncoder(w).Encode(response)
+	return 0, json.NewEncoder(w).Encode(config)
+}
+
+// generateOnlyOfficeConfig generates the complete OnlyOffice editor configuration
+func generateOnlyOfficeConfig(req OnlyOfficeConfigRequest, d *data) (*OnlyOfficeConfig, error) {
+	// Generate document key
+	documentKey := generateDocumentKey(req.FilePath, req.FileModified)
+
+	// Get file extension and document type
+	fileExt := getFileExtension(req.FileName)
+	documentType := getDocumentType(fileExt)
+
+	// Generate URLs
+	documentURL := generateDocumentURL(req.FilePath, req.Auth)
+	callbackURL := generateCallbackURL(req.UserID)
+
+	// Create configuration
+	config := &OnlyOfficeConfig{
+		DocumentType: documentType,
+		Document: OnlyOfficeDocument{
+			Key:      documentKey,
+			Title:    req.FileName,
+			URL:      documentURL,
+			FileType: fileExt,
+			Permissions: OnlyOfficeDocPermissions{
+				Edit:     true,
+				Download: true,
+				Print:    true,
+				Review:   true,
+				Comment:  true,
+			},
+		},
+		EditorConfig: OnlyOfficeEditorConfig{
+			Mode: "edit",
+			Lang: "zh-CN",
+			User: OnlyOfficeUser{
+				ID:   req.UserID,
+				Name: req.Username,
+			},
+			Customization: OnlyOfficeCustomization{
+				Autosave:  true,
+				Forcesave: false,
+			},
+			CallbackURL: callbackURL,
+		},
+	}
+
+	// Generate JWT token
+	token, err := generateJWTToken(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate JWT token: %v", err)
+	}
+	config.Token = token
+
+	return config, nil
+}
+
+// generateDocumentKey generates a unique document key
+func generateDocumentKey(filePath, fileModified string) string {
+	return fmt.Sprintf("%s", base64.URLEncoding.EncodeToString([]byte(filePath+fileModified)))
+}
+
+// getFileExtension extracts file extension from filename
+func getFileExtension(filename string) string {
+	ext := filepath.Ext(filename)
+	if len(ext) > 0 {
+		return ext[1:] // Remove the dot
+	}
+	return ""
+}
+
+// getDocumentType determines OnlyOffice document type based on file extension
+func getDocumentType(fileExt string) string {
+	fileExt = strings.ToLower(fileExt)
+
+	// Word documents
+	wordExts := []string{"doc", "docx", "docm", "dot", "dotx", "dotm", "odt", "fodt", "ott", "rtf", "txt"}
+	for _, ext := range wordExts {
+		if fileExt == ext {
+			return "text"
+		}
+	}
+
+	// Excel documents
+	excelExts := []string{"xls", "xlsx", "xlsm", "xlt", "xltx", "xltm", "ods", "fods", "ots", "csv"}
+	for _, ext := range excelExts {
+		if fileExt == ext {
+			return "spreadsheet"
+		}
+	}
+
+	// PowerPoint documents
+	pptExts := []string{"ppt", "pptx", "pptm", "pot", "potx", "potm", "odp", "fodp", "otp"}
+	for _, ext := range pptExts {
+		if fileExt == ext {
+			return "presentation"
+		}
+	}
+
+	return "text" // Default to text
+}
+
+// generateDocumentURL generates the URL for accessing the document
+func generateDocumentURL(filePath, auth string) string {
+	return fmt.Sprintf("%s/api/raw%s?auth=%s", baseHost, filePath, auth)
+}
+
+// generateCallbackURL generates the callback URL for OnlyOffice
+func generateCallbackURL(userID int) string {
+	return fmt.Sprintf("%s/api/onlyoffice/callback?userId=%d", baseHost, userID)
+}
+
+// generateJWTToken generates JWT token for OnlyOffice configuration
+func generateJWTToken(config *OnlyOfficeConfig) (string, error) {
+	// Create payload
+	payload, err := json.Marshal(config)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal config: %v", err)
+	}
+
+	// Create header
+	header := map[string]interface{}{
+		"alg": "HS256",
+		"typ": "JWT",
+	}
+	headerBytes, err := json.Marshal(header)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal header: %v", err)
+	}
+
+	// Encode header and payload
+	headerEncoded := base64.RawURLEncoding.EncodeToString(headerBytes)
+	payloadEncoded := base64.RawURLEncoding.EncodeToString(payload)
+
+	// Create signature
+	message := headerEncoded + "." + payloadEncoded
+	h := hmac.New(sha256.New, []byte(jwtSecret))
+	h.Write([]byte(message))
+	signature := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+
+	// Combine all parts
+	token := message + "." + signature
+	return token, nil
 }
 
 // onlyOfficeCallbackHandler handles callbacks from OnlyOffice Document Server

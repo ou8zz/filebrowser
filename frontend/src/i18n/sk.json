@@ -1,6 +1,7 @@
 {
   "buttons": {
     "cancel": "Zrušiť",
+    "clear": "Zrušiť výber",
     "close": "Zavrieť",
     "copy": "Kopírovať",
     "copyFile": "Kopírovať súbor",
@@ -51,7 +52,6 @@
   },
   "files": {
     "body": "Telo",
-    "clear": "Zrušiť výber",
     "closePreview": "Zavrieť náhľad",
     "files": "Súbory",
     "folders": "Priečinky",
@@ -81,31 +81,6 @@
     "f1": "tieto informácie",
     "f2": "premenuje súbor",
     "help": "Pomoc"
-  },
-  "languages": {
-    "he": "עברית",
-    "hu": "Magyar",
-    "ar": "العربية",
-    "de": "Deutsch",
-    "en": "English",
-    "es": "Español",
-    "fr": "Français",
-    "is": "Icelandic",
-    "it": "Italiano",
-    "ja": "日本語",
-    "ko": "한국어",
-    "nlBE": "Dutch (Belgium)",
-    "pl": "Polski",
-    "pt": "Português",
-    "ptBR": "Português (Brasil)",
-    "ro": "Romanian",
-    "ru": "Русский",
-    "sk": "Slovenčina",
-    "svSE": "Swedish (Sweden)",
-    "tr" : "Türkçe",
-    "ua": "Українська",
-    "zhCN": "中文 (简体)",
-    "zhTW": "中文 (繁體)"
   },
   "login": {
     "createAnAccount": "Vytvoriť účet",

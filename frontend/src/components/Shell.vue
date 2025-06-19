@@ -2,7 +2,7 @@
   <div
     class="shell"
     :class="{ ['shell--hidden']: !showShell }"
-    :style="{ height: `${this.shellHeight}em` }"
+    :style="{ height: `${this.shellHeight}em`, direction: 'ltr' }"
   >
     <div
       @pointerdown="startDrag()"
@@ -29,9 +29,9 @@
           tabindex="0"
           ref="input"
           class="shell__text"
-          contenteditable="true"
-          @keydown.prevent.38="historyUp"
-          @keydown.prevent.40="historyDown"
+          :contenteditable="true"
+          @keydown.prevent.arrow-up="historyUp"
+          @keydown.prevent.arrow-down="historyDown"
           @keypress.prevent.enter="submit"
         />
       </div>
@@ -45,16 +45,19 @@
 </template>
 
 <script>
-import { mapMutations, mapState, mapGetters } from "vuex";
+import { mapState, mapActions } from "pinia";
+import { useFileStore } from "@/stores/file";
+import { useLayoutStore } from "@/stores/layout";
+
 import { commands } from "@/api";
-import { throttle } from "lodash";
+import { throttle } from "lodash-es";
 import { theme } from "@/utils/constants";
 
 export default {
   name: "shell",
   computed: {
-    ...mapState(["user", "showShell"]),
-    ...mapGetters(["isFiles", "isLogged"]),
+    ...mapState(useLayoutStore, ["showShell"]),
+    ...mapState(useFileStore, ["isFiles"]),
     path: function () {
       if (this.isFiles) {
         return this.$route.path;
@@ -75,11 +78,11 @@ export default {
   mounted() {
     window.addEventListener("resize", this.resize);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener("resize", this.resize);
   },
   methods: {
-    ...mapMutations(["toggleShell"]),
+    ...mapActions(useLayoutStore, ["toggleShell"]),
     checkTheme() {
       if (theme == "dark") {
         return "rgba(255, 255, 255, 0.4)";
@@ -160,7 +163,7 @@ export default {
       this.canInput = false;
       event.target.innerHTML = "";
 
-      let results = {
+      const results = {
         text: `${cmd}\n\n`,
       };
 
@@ -177,7 +180,7 @@ export default {
         },
         () => {
           results.text = results.text
-            // eslint-disable-next-line no-control-regex
+
             .replace(/\u001b\[[0-9;]+m/g, "") // Filter ANSI color for now
             .trimEnd();
           this.canInput = true;

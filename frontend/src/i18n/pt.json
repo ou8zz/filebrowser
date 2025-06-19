@@ -1,7 +1,9 @@
 {
   "buttons": {
     "cancel": "Cancelar",
+    "clear": "Limpar",
     "close": "Fechar",
+    "continue": "Continuar",
     "copy": "Copiar",
     "copyFile": "Copiar ficheiro",
     "copyToClipboard": "Copiar",
@@ -46,7 +48,6 @@
   },
   "files": {
     "body": "Corpo",
-    "clear": "Limpar",
     "closePreview": "Fechar pré-visualização",
     "files": "Ficheiros",
     "folders": "Pastas",
@@ -75,31 +76,6 @@
     "f1": "esta informação",
     "f2": "alterar nome do ficheiro",
     "help": "Ajuda"
-  },
-  "languages": {
-    "he": "עברית",
-    "hu": "Magyar",
-    "ar": "Árabe",
-    "de": "Alemão",
-    "en": "Inglês",
-    "es": "Espanhol",
-    "fr": "Francês",
-    "is": "",
-    "it": "Italiano",
-    "ja": "Japonês",
-    "ko": "Coreano",
-    "nlBE": "",
-    "pl": "Polaco",
-    "pt": "Português",
-    "ptBR": "Português (Brasil)",
-    "ro": "",
-    "ru": "Russo",
-    "sk": "Slovenčina",
-    "svSE": "",
-    "tr" : "Türkçe",
-    "ua": "Українська",
-    "zhCN": "Chinês simplificado",
-    "zhTW": "Chinês tradicional"
   },
   "login": {
     "createAnAccount": "Criar uma conta",
