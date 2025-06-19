@@ -20,6 +20,7 @@
     "css-vars-ponyfill": "^2.4.8",
     "filesize": "^10.0.8",
     "js-base64": "^3.7.5",
+    "jwt-encode": "^1.0.1",
     "lodash.clonedeep": "^4.5.0",
     "lodash.throttle": "^4.1.1",
     "material-icons": "^1.13.9",

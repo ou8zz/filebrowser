@@ -89,6 +89,11 @@
           class="pdf"
           :data="raw"
         ></object>
+        <OnlyOfficeEditor
+          v-else-if="isOfficeFile"
+          :file="req"
+          :jwt="jwt"
+        ></OnlyOfficeEditor>
         <div v-else-if="req.type == 'blob'" class="info">
           <div class="title">
             <i class="material-icons">feedback</i>
@@ -151,8 +156,11 @@ import throttle from "lodash.throttle";
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
 import ExtendedImage from "@/components/files/ExtendedImage.vue";
+import OnlyOfficeEditor from "@/components/files/OnlyOfficeEditor.vue";
 
 const mediaTypes = ["image", "video", "audio", "blob"];
+const officeTypes = [".docx", ".doc", ".odt", ".rtf", ".xlsx", ".xls", ".ods", ".csv", ".pptx", ".ppt", ".odp"];
+const previewableTypes = [...mediaTypes, "office"];
 
 export default {
   name: "preview",
@@ -160,6 +168,7 @@ export default {
     HeaderBar,
     Action,
     ExtendedImage,
+    OnlyOfficeEditor,
   },
   data: function () {
     return {
@@ -207,6 +216,9 @@ export default {
       }
       return [];
     },
+    isOfficeFile() {
+      return officeTypes.includes(this.req.extension.toLowerCase());
+    }
   },
   watch: {
     $route: function () {
@@ -294,14 +306,14 @@ export default {
         }
 
         for (let j = i - 1; j >= 0; j--) {
-          if (mediaTypes.includes(this.listing[j].type)) {
+          if (mediaTypes.includes(this.listing[j].type) || officeTypes.includes(this.listing[j].extension?.toLowerCase())) {
             this.previousLink = this.listing[j].url;
             this.previousRaw = this.prefetchUrl(this.listing[j]);
             break;
           }
         }
         for (let j = i + 1; j < this.listing.length; j++) {
-          if (mediaTypes.includes(this.listing[j].type)) {
+          if (mediaTypes.includes(this.listing[j].type) || officeTypes.includes(this.listing[j].extension?.toLowerCase())) {
             this.nextLink = this.listing[j].url;
             this.nextRaw = this.prefetchUrl(this.listing[j]);
             break;

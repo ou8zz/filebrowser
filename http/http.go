@@ -86,6 +86,10 @@ func NewHandler(
     Handler(monkey(previewHandler(imgSvc, fileCache, server.EnableThumbnails, server.ResizePreview), "/api/preview")).Methods("GET")
   api.PathPrefix("/command").Handler(monkey(commandsHandler, "/api/command")).Methods("GET")
   api.PathPrefix("/search").Handler(monkey(searchHandler, "/api/search")).Methods("GET")
+  
+  // OnlyOffice handlers
+  api.Handle("/onlyoffice/callback", monkey(onlyOfficeCallbackHandler, "")).Methods("POST", "OPTIONS")
+  api.Handle("/onlyoffice/mapping", monkey(onlyOfficeMappingHandler, "")).Methods("POST", "OPTIONS")
 
   public := api.PathPrefix("/public").Subrouter()
   public.PathPrefix("/dl").Handler(monkey(publicDlHandler, "/api/public/dl/")).Methods("GET")
