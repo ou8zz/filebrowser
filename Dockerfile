@@ -19,7 +19,7 @@ COPY filebrowser /bin/filebrowser
 COPY docker/common/ /
 COPY docker/alpine/ /
 
-RUN chown -R user:user /bin/filebrowser /defaults healthcheck.sh init.sh
+# RUN chown -R user:user /bin/filebrowser /defaults healthcheck.sh init.sh
 
 # Define healthcheck script
 HEALTHCHECK --start-period=2s --interval=5s --timeout=3s CMD /healthcheck.sh
