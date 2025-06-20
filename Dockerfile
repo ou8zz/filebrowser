@@ -9,10 +9,10 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 ENV UID=99
 ENV GID=100
 
-RUN addgroup -g $GID user && \
-  adduser -D -u $UID -G user user && \
-  mkdir -p /config /database /srv && \
-  chown -R user:user /config /database /srv
+# RUN addgroup -g $GID user && \
+#   adduser -D -u $UID -G user user && \
+#   mkdir -p /config /database /srv && \
+#   chown -R user:user /config /database /srv
 
 # Copy files and set permissions
 COPY filebrowser /bin/filebrowser
@@ -20,7 +20,7 @@ RUN chmod +x /bin/filebrowser
 COPY docker/common/ /
 COPY docker/alpine/ /
 
-RUN chown -R user:user /bin/filebrowser /defaults healthcheck.sh init.sh
+# RUN chown -R user:user /bin/filebrowser /defaults healthcheck.sh init.sh
 
 # Define healthcheck script
 HEALTHCHECK --start-period=2s --interval=5s --timeout=3s CMD /healthcheck.sh
