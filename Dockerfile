@@ -32,5 +32,4 @@ VOLUME /srv /config /database
 EXPOSE 80
 
 ENTRYPOINT [ "tini", "--", "/init.sh" ]
-RUN chmod +x /config/settings.json
-CMD [ "filebrowser", "--config", "/config/settings.json" ]
+CMD [ "filebrowser" ]
