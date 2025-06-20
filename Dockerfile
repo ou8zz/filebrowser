@@ -30,7 +30,7 @@ HEALTHCHECK --start-period=2s --interval=5s --timeout=3s CMD /healthcheck.sh
 VOLUME /srv /config /database
 
 EXPOSE 80
-RUN chmod +x /config/settings.json /init.sh
+
 ENTRYPOINT [ "tini", "--", "/init.sh" ]
-RUN chmod +x /config/settings.json /init.sh
+RUN chmod +x /config/settings.json
 CMD [ "filebrowser", "--config", "/config/settings.json" ]
