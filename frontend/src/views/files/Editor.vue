@@ -69,7 +69,13 @@ const router = useRouter();
 
 const editor = ref<Ace.Editor | null>(null);
 
-const isAce = ref(true);
+// 检测是否为移动设备
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+         window.innerWidth <= 768;
+};
+
+const isAce = ref(!isMobile());
 const codeValue = ref("");
 const isPreview = ref(false);
 const previewContent = ref("");
@@ -82,6 +88,9 @@ onMounted(() => {
   window.addEventListener("wheel", handleScroll);
 
   const fileContent = fileStore.req?.content || "";
+  if(!isAce.value) {
+    codeValue.value = fileContent;
+  }
 
   watchEffect(async () => {
     if (isMarkdownFile && isPreview.value) {

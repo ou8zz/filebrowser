@@ -14,6 +14,13 @@ const DefaultUsersHomeBasePath = "/users"
 // AuthMethod describes an authentication method.
 type AuthMethod string
 
+// OnlyOffice contains OnlyOffice integration settings.
+type OnlyOffice struct {
+	Enabled   bool   `json:"enabled"`
+	Host      string `json:"host"`
+	JwtSecret string `json:"jwtSecret"`
+}
+
 // Settings contain the main settings of the application.
 type Settings struct {
 	Key              []byte              `json:"key"`
@@ -24,6 +31,7 @@ type Settings struct {
 	AuthMethod       AuthMethod          `json:"authMethod"`
 	Branding         Branding            `json:"branding"`
 	Tus              Tus                 `json:"tus"`
+	OnlyOffice       OnlyOffice          `json:"onlyoffice"`
 	Commands         map[string][]string `json:"commands"`
 	Shell            []string            `json:"shell"`
 	Rules            []rules.Rule        `json:"rules"`

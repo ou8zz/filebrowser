@@ -41,6 +41,7 @@ type OnlyOfficeConfigRequest struct {
 	UserID       int    `json:"userId"`
 	Username     string `json:"username"`
 	Auth         string `json:"auth"`
+	Origin       string `json:"origin"`
 }
 
 // OnlyOfficeConfig represents the complete OnlyOffice editor configuration
@@ -48,6 +49,7 @@ type OnlyOfficeConfig struct {
 	DocumentType string                 `json:"documentType"`
 	Document     OnlyOfficeDocument     `json:"document"`
 	EditorConfig OnlyOfficeEditorConfig `json:"editorConfig"`
+	Host         string                 `json:"host"`
 	Token        string                 `json:"token"`
 }
 
@@ -85,9 +87,6 @@ type OnlyOfficeCustomization struct {
 	Forcesave bool `json:"forcesave"`
 }
 
-const jwtSecret = "123456B"
-const baseHost = "http://172.16.14.250:8080"
-
 // onlyOfficeMappingHandler handles OnlyOffice editor configuration requests
 func onlyOfficeMappingHandler(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
 	// Add CORS headers for OnlyOffice integration
@@ -122,6 +121,7 @@ func onlyOfficeMappingHandler(w http.ResponseWriter, r *http.Request, d *data) (
 	}
 
 	// Generate OnlyOffice configuration
+	configReq.Origin = r.Header.Get("Origin")
 	config, err := generateOnlyOfficeConfig(configReq, d)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to generate config: %v", err)
@@ -129,7 +129,7 @@ func onlyOfficeMappingHandler(w http.ResponseWriter, r *http.Request, d *data) (
 
 	// Store the document key mapping
 	documentKeyMapping[config.Document.Key] = configReq.FilePath
-	fmt.Printf("Stored document key mapping: %s -> %s\n", config.Document.Key, configReq.FilePath)
+	fmt.Printf("Stored document key mapping host:%s key:%s path:%s\n", configReq.Origin, config.Document.Key, configReq.FilePath)
 
 	w.Header().Set("Content-Type", "application/json")
 	return 0, json.NewEncoder(w).Encode(config)
@@ -144,9 +144,12 @@ func generateOnlyOfficeConfig(req OnlyOfficeConfigRequest, d *data) (*OnlyOffice
 	fileExt := getFileExtension(req.FileName)
 	documentType := getDocumentType(fileExt)
 
+	if !d.settings.OnlyOffice.Enabled || d.settings.OnlyOffice.Host == "" {
+		return nil, fmt.Errorf("OnlyOffice服务未配置")
+	}
 	// Generate URLs
-	documentURL := generateDocumentURL(req.FilePath, req.Auth)
-	callbackURL := generateCallbackURL(req.UserID)
+	documentURL := fmt.Sprintf("%s/api/raw%s?auth=%s", req.Origin, req.FilePath, req.Auth)
+	callbackURL := fmt.Sprintf("%s/api/onlyoffice/callback?userId=%d", req.Origin, req.UserID)
 
 	// Create configuration
 	config := &OnlyOfficeConfig{
@@ -177,10 +180,11 @@ func generateOnlyOfficeConfig(req OnlyOfficeConfigRequest, d *data) (*OnlyOffice
 			},
 			CallbackURL: callbackURL,
 		},
+		Host: d.settings.OnlyOffice.Host,
 	}
 
 	// Generate JWT token
-	token, err := generateJWTToken(config)
+	token, err := generateJWTToken(config, d.settings.OnlyOffice.JwtSecret)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT token: %v", err)
 	}
@@ -234,18 +238,8 @@ func getDocumentType(fileExt string) string {
 	return "text" // Default to text
 }
 
-// generateDocumentURL generates the URL for accessing the document
-func generateDocumentURL(filePath, auth string) string {
-	return fmt.Sprintf("%s/api/raw%s?auth=%s", baseHost, filePath, auth)
-}
-
-// generateCallbackURL generates the callback URL for OnlyOffice
-func generateCallbackURL(userID int) string {
-	return fmt.Sprintf("%s/api/onlyoffice/callback?userId=%d", baseHost, userID)
-}
-
 // generateJWTToken generates JWT token for OnlyOffice configuration
-func generateJWTToken(config *OnlyOfficeConfig) (string, error) {
+func generateJWTToken(config *OnlyOfficeConfig, jwtSecret string) (string, error) {
 	// Create payload
 	payload, err := json.Marshal(config)
 	if err != nil {

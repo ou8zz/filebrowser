@@ -6,6 +6,7 @@ interface ISettings {
   rules: any[];
   branding: SettingsBranding;
   tus: SettingsTus;
+  onlyoffice: SettingsOnlyOffice;
   shell: string[];
   commands: SettingsCommand;
 }
@@ -34,6 +35,11 @@ interface SettingsBranding {
 interface SettingsTus {
   chunkSize: number;
   retryCount: number;
+}
+
+interface SettingsOnlyOffice {
+  enabled: boolean;
+  host: string;
 }
 
 interface SettingsCommand {

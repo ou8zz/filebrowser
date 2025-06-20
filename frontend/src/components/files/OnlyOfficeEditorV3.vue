@@ -9,7 +9,7 @@
     <!-- 错误状态 -->
     <div v-else-if="error" class="error-container">
       <div class="error-message">
-        <h3>加载失败</h3>
+        <h3>加载失败,请检查 OnlyOffice 服务配置</h3>
         <p>{{ error }}</p>
         <button @click="initializeEditor" class="retry-button">重试</button>
       </div>
@@ -55,7 +55,7 @@ const authStore = useAuthStore();
 const user = authStore.user;
 
 // Reactive data
-const documentServerUrl = ref('http://localhost');
+const documentServerUrl = ref("");
 const editorConfig = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
@@ -101,8 +101,8 @@ const getEditorConfigFromBackend = async () => {
         filePath: props.file.path,
         fileName: props.file.name,
         fileModified: props.file.modified,
-        userId: 'user-' + user ? user.id : 'anonymous',
-        username: user?.username || '张三'
+        userId: user ? user.id : 'anonymous',
+        username: user?.username || '用户'
       })
     });
     
@@ -111,6 +111,7 @@ const getEditorConfigFromBackend = async () => {
     }
     
     const config = await response.json();
+    documentServerUrl.value = config.host;
     return config;
   } catch (error) {
     console.error('获取编辑器配置时出错:', error);

@@ -106,7 +106,7 @@ import { useLayoutStore } from "@/stores/layout";
 import { filesize } from "@/utils";
 import dayjs from "dayjs";
 import { files as api } from "@/api";
-import { fetchURL } from "../../api/utils.js";
+import { fetchURL } from "@/api/utils";
 
 export default {
   name: "info",

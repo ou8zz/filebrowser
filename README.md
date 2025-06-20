@@ -38,6 +38,118 @@ File Browser is a **create-your-own-cloud-kind** of software where you can insta
 | :----------------------: | :----------------------: | :----------------------: |
 | ![](./docs/assets/4.jpg) | ![](./docs/assets/5.jpg) | ![](./docs/assets/6.jpg) |
 
+## 源码增强功能 (Enhanced Features)
+
+基于原版 File Browser，本项目在源码基础上进行了以下重要增强：
+
+### 1. 文件列表增强显示
+
+**功能描述：** 在文件列表中新增了 "拥有者" 和 "权限" 两列，提供更详细的文件系统信息。
+
+**实现思路：**
+- 后端：扩展文件信息结构体，添加 `Owner` 和 `Mode` 字段
+- 前端：修改文件列表组件，增加对应的表格列显示
+- 权限显示采用 Unix 风格的八进制表示法（如 755, 644）
+- 拥有者信息通过系统调用获取用户名
+
+**相关文件修改：**
+- `files/file.go` - 扩展文件信息获取逻辑
+- `frontend/src/components/files/Listing.vue` - 前端列表显示组件
+- `frontend/src/i18n/` - 国际化文本支持
+
+### 2. 文件夹大小信息显示
+
+**功能描述：** 在文件夹的详细信息（info）中显示文件夹的总大小，包含所有子文件和子文件夹。
+
+**实现思路：**
+- 递归遍历文件夹结构计算总大小
+- 采用异步计算避免阻塞主线程
+- 支持大文件夹的分批计算和进度显示
+- 缓存机制避免重复计算
+
+**技术要点：**
+- 使用 `filepath.Walk` 进行目录遍历
+- 实现大小格式化显示（B, KB, MB, GB, TB）
+- 前端显示加载状态和计算进度
+
+### 3. 移动端编辑器自适应
+
+**功能描述：** 编辑器在移动设备上自动切换为简单文本编辑模式，解决 ACE 编辑器在移动设备上操作困难的问题。
+
+**实现思路：**
+- 设备检测：通过 User Agent 和屏幕宽度判断移动设备
+- 自动切换：移动设备默认使用 textarea，桌面设备使用 ACE 编辑器
+- 保留手动切换功能，用户可根据需要在两种模式间切换
+
+**检测逻辑：**
+```javascript
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+         window.innerWidth <= 768;
+};
+```
+
+**相关文件：**
+- `frontend/src/views/files/Editor.vue` - 编辑器主组件
+
+### 4. OnlyOffice 文档预览与编辑
+
+**功能描述：** 集成 OnlyOffice 文档服务器，支持 Word、Excel、PowerPoint 等 Office 文档的在线预览和编辑。
+
+**架构设计：**
+- **后端集成：** 新增 OnlyOffice 配置和 API 接口
+- **前端组件：** 嵌入 OnlyOffice 编辑器组件
+- **设置管理：** 管理员可配置 OnlyOffice 服务器地址
+- **文件支持：** 支持 .docx, .xlsx, .pptx 等主流格式
+
+**实现要点：**
+
+1. **后端配置结构：**
+   ```go
+   type OnlyOfficeConfig struct {
+       Enabled bool   `json:"enabled"`
+       Host     string `json:"host"`
+       JwtSecret string `json:"jwtSecret"`
+   }
+   ```
+
+2. **前端设置界面：**
+   - 启用/禁用 OnlyOffice 集成的开关
+   - OnlyOffice 服务器地址配置
+   - 支持的文件格式说明
+
+3. **文档编辑流程：**
+   - 检测文件类型是否支持 OnlyOffice
+   - 生成临时访问令牌和回调 URL
+   - 嵌入 OnlyOffice 编辑器并加载文档
+   - 处理文档保存回调
+
+**Docker 部署示例：**
+```bash
+# 启动 OnlyOffice 文档服务器
+docker run -d --name onlyoffice-docs \
+  -p 6066:80 \
+  -e JWT_ENABLED=true \
+  -e JWT_SECRET=xxxxxxxx \
+  onlyoffice/documentserver
+```
+
+**相关文件修改：**
+- `settings/settings.go` - 添加 OnlyOffice 配置
+- `http/onlyoffice.go` - OnlyOffice API 接口
+- `frontend/src/views/settings/Global.vue` - 设置界面
+- `frontend/src/components/files/` - 文件预览组件
+
+### 技术栈说明
+
+- **后端：** Go 1.23, 基于原有架构扩展
+- **前端：** Vue 3 + TypeScript, 保持原有技术栈
+- **文档服务：** OnlyOffice Document Server
+- **部署：** 支持 Docker 容器化部署
+
+### 配置说明
+
+所有新增功能都提供了相应的配置选项，管理员可以根据需要启用或禁用特定功能。OnlyOffice 功能需要额外部署文档服务器，其他功能开箱即用。
 
 ## Install
 

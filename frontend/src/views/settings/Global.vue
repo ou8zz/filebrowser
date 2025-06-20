@@ -8,6 +8,37 @@
         </div>
 
         <div class="card-content">
+          <h3>{{ t("settings.onlyoffice") }}</h3>
+
+          <p class="small">{{ t("settings.onlyofficeHelp") }}</p>
+
+          <p>
+            <input type="checkbox" v-model="settings.onlyoffice.enabled" />
+            {{ t("settings.enableOnlyOffice") }}
+          </p>
+
+          <p>
+            <label for="onlyoffice-host">{{ t("settings.onlyofficeHost") }}</label>
+            <input
+              class="input input--block"
+              type="text"
+              v-model="settings.onlyoffice.host"
+              placeholder="https://your-onlyoffice-server.com"
+            />
+          </p>
+
+          <p>
+            <label for="onlyoffice-jwt-secret">{{ t("settings.onlyofficeJwtSecret") }}</label>
+            <input
+              class="input input--block"
+              type="text"
+              v-model="settings.onlyoffice.jwtSecret"
+              placeholder="JWT Secret for OnlyOffice"
+            />
+          </p>
+        </div>
+
+        <div class="card-content">
           <p>
             <input type="checkbox" v-model="settings.signup" />
             {{ t("settings.allowSignup") }}

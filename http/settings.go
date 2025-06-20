@@ -16,6 +16,7 @@ type settingsData struct {
 	Rules            []rules.Rule          `json:"rules"`
 	Branding         settings.Branding     `json:"branding"`
 	Tus              settings.Tus          `json:"tus"`
+	OnlyOffice       settings.OnlyOffice   `json:"onlyoffice"`
 	Shell            []string              `json:"shell"`
 	Commands         map[string][]string   `json:"commands"`
 }
@@ -29,6 +30,7 @@ var settingsGetHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, 
 		Rules:            d.settings.Rules,
 		Branding:         d.settings.Branding,
 		Tus:              d.settings.Tus,
+		OnlyOffice:       d.settings.OnlyOffice,
 		Shell:            d.settings.Shell,
 		Commands:         d.settings.Commands,
 	}
@@ -50,6 +52,7 @@ var settingsPutHandler = withAdmin(func(_ http.ResponseWriter, r *http.Request, 
 	d.settings.Rules = req.Rules
 	d.settings.Branding = req.Branding
 	d.settings.Tus = req.Tus
+	d.settings.OnlyOffice = req.OnlyOffice
 	d.settings.Shell = req.Shell
 	d.settings.Commands = req.Commands
 
