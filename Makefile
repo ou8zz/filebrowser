@@ -28,7 +28,7 @@ test: | test-frontend test-backend ## Run all tests
 
 .PHONY: test-frontend
 test-frontend: ## Run frontend tests
-	$Q cd frontend && pnpm install --frozen-lockfile && pnpm run typecheck
+	$Q cd frontend && yarn --frozen-lockfile && yarn typecheck
 
 .PHONY: test-backend
 test-backend: ## Run backend tests
