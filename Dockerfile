@@ -15,7 +15,6 @@ RUN apk update && \
 #   chown -R user:user /config /database /srv
 
 # Copy files and set permissions
-COPY docker_config.json /config/settings.json
 COPY filebrowser /bin/filebrowser
 COPY docker/common/ /
 COPY docker/alpine/ /
@@ -26,7 +25,7 @@ COPY docker/alpine/ /
 HEALTHCHECK --start-period=2s --interval=5s --timeout=3s CMD /healthcheck.sh
 
 # Set the user, volumes and exposed ports
-USER user
+#USER user
 
 VOLUME /srv /config /database
 
