@@ -13,7 +13,7 @@ dev: | build-frontend build-backend-dev ## Build binary
 
 .PHONY: build-frontend
 build-frontend: ## Build frontend
-	$Q cd frontend && pnpm install --frozen-lockfile && pnpm run build
+	$Q cd frontend && npm install --frozen-lockfile && npm run build
 
 .PHONY: build-backend-dev
 build-backend-dev: ## Build backend-dev
