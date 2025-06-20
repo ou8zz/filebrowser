@@ -15,6 +15,7 @@ RUN apk update && \
 #   chown -R user:user /config /database /srv
 
 # Copy files and set permissions
+COPY docker_config.json /.filebrowser.json
 COPY filebrowser /bin/filebrowser
 COPY docker/common/ /
 COPY docker/alpine/ /
