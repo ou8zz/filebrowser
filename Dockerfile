@@ -5,7 +5,7 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 VOLUME /srv
 EXPOSE 80
 
-COPY 111.json /.filebrowser.json
+COPY ./111.json /.filebrowser.json
 COPY filebrowser /filebrowser
 
 ENTRYPOINT [ "/filebrowser" ]
