@@ -28,7 +28,7 @@ test: | test-frontend test-backend ## Run all tests
 
 .PHONY: test-frontend
 test-frontend: ## Run frontend tests
-	$Q cd frontend && yarn --frozen-lockfile && yarn typecheck
+	$Q cd frontend && pnpm install --frozen-lockfile && pnpm run typecheck
 
 .PHONY: test-backend
 test-backend: ## Run backend tests
@@ -39,7 +39,7 @@ lint: lint-frontend lint-backend ## Run all linters
 
 .PHONY: lint-frontend
 lint-frontend: ## Run frontend linters
-	$Q cd frontend && yarn --frozen-lockfile && yarn lint
+	$Q cd frontend && pnpm install --frozen-lockfile && pnpm run lint
 
 .PHONY: lint-backend
 lint-backend: | $(golangci-lint) ## Run backend linters
