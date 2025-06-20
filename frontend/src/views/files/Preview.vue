@@ -106,7 +106,7 @@
         </VideoPlayer>
         <object v-else-if="isPdf" class="pdf" :data="raw"></object>
         <OnlyOfficeEditorV3
-          v-else-if="isOfficeFile()"
+          v-else-if="isOfficeFile() && fileStore.req"
           :file="fileStore.req"
           :jwt="jwt">
         </OnlyOfficeEditorV3>

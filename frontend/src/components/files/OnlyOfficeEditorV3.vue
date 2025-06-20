@@ -61,9 +61,10 @@ const user = authStore.user;
 
 // Reactive data
 const documentServerUrl = ref("");
+const documentUrl = ref("");
 const editorConfig = ref(null);
 const isLoading = ref(true);
-const error = ref(null);
+const error = ref<string | null>(null);
 
 // Lifecycle
 onMounted(() => {
@@ -87,7 +88,7 @@ const initializeEditor = async () => {
     });
   } catch (err) {
     console.error('初始化编辑器失败:', err);
-    error.value = err.message || '初始化编辑器失败';
+    error.value = (err as Error).message || '初始化编辑器失败';
   } finally {
     isLoading.value = false;
   }

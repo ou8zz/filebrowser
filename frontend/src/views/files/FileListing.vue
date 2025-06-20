@@ -225,8 +225,8 @@
             v-bind:type="item.type"
             v-bind:size="item.size"
             v-bind:path="item.path"
-            v-bind:owner="item.owner"
-            v-bind:perm="item.perm"
+            v-bind:owner="item.owner || ''"
+            v-bind:perm="item.perm || ''"
           >
           </item>
         </div>

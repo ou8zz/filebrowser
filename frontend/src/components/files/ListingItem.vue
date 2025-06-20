@@ -56,8 +56,8 @@ const $showError = inject<IToastError>("$showError")!;
 const router = useRouter();
 
 const props = defineProps<{
-  owner: string;
-  perm: string;
+  owner?: string;
+  perm?: string;
   name: string;
   isDir: boolean;
   url: string;

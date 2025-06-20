@@ -251,6 +251,8 @@
               v-bind:modified="item.modified"
               v-bind:type="item.type"
               v-bind:size="item.size"
+              v-bind:owner="item.owner || ''"
+              v-bind:perm="item.perm || ''"
               readOnly
             >
             </item>

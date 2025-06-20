@@ -40,6 +40,7 @@ interface SettingsTus {
 interface SettingsOnlyOffice {
   enabled: boolean;
   host: string;
+  jwtSecret?: string;
 }
 
 interface SettingsCommand {

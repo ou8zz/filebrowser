@@ -107,14 +107,17 @@ import { filesize } from "@/utils";
 import dayjs from "dayjs";
 import { files as api } from "@/api";
 import { fetchURL } from "@/api/utils";
+import { ref } from 'vue';
+
+const humanSize = ref(0);
 
 export default {
   name: "info",
   inject: ["$showError"],
-  data() {
+  setup() {
     return {
-      humanSize: ''
-    };
+      humanSize
+    }
   },
   created() {
       console.log("exec getHumanSize");
@@ -202,15 +205,8 @@ export default {
       }
     },
     getHumanSize: async function () {
-      if (this.selectedCount === 0 || !this.isListing) {
-        console.log("this.req.size:", this.req.size);
-        return filesize(this.req.size);
-      }
-
-      let sum = 0;
       let urls = '';
       for (let selected of this.selected) {
-        // sum += this.req.items[selected].size;
         urls += this.req.items[selected].path + ',';
       }
 
@@ -218,8 +214,7 @@ export default {
       console.log("res", res);
       let data = await res.json();
       console.log("data.info:", data);
-      this.humanSize = filesize(data.size);
-      this.dirSize = this.humanSize;
+      humanSize.value = filesize(data.size);
     },
   },
 };
