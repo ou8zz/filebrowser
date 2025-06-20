@@ -148,6 +148,7 @@ func generateOnlyOfficeConfig(req OnlyOfficeConfigRequest, d *data) (*OnlyOffice
 		return nil, fmt.Errorf("OnlyOffice服务未配置")
 	}
 	// Generate URLs
+	req.Origin = "http://192.168.0.23:3080"
 	documentURL := fmt.Sprintf("%s/api/raw%s?auth=%s", req.Origin, req.FilePath, req.Auth)
 	callbackURL := fmt.Sprintf("%s/api/onlyoffice/callback?userId=%d", req.Origin, req.UserID)
 
