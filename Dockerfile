@@ -31,5 +31,4 @@ VOLUME /srv /config /database
 
 EXPOSE 80
 
-ENTRYPOINT [ "tini", "--", "/init.sh" ]
 CMD [ "filebrowser" ]
