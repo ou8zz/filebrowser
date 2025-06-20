@@ -11,7 +11,10 @@
       <div class="error-message">
         <h3>加载失败,请检查 OnlyOffice 服务配置</h3>
         <p>{{ error }}</p>
-        <button @click="initializeEditor" class="retry-button">重试</button>
+        <div class="button-group">
+          <button @click="initializeEditor" class="retry-button">重试</button>
+          <button @click="goToSettings" class="settings-button">前往配置</button>
+        </div>
       </div>
     </div>
     
@@ -35,6 +38,7 @@
 import { onMounted, ref } from 'vue';
 import { DocumentEditor } from '@onlyoffice/document-editor-vue';
 import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
 import { fetchURL } from "@/api/utils.js";
 
 // Props
@@ -50,8 +54,9 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// Store
+// Store and Router
 const authStore = useAuthStore();
+const router = useRouter();
 const user = authStore.user;
 
 // Reactive data
@@ -157,6 +162,10 @@ const onLoadComponentError = (errorCode: number, errorDescription: string) => {
       console.log('Component error:', errorDescription);
   }
 };
+
+const goToSettings = () => {
+  router.push('/settings/global');
+};
 </script>
 
 <style scoped>
@@ -224,9 +233,14 @@ const onLoadComponentError = (errorCode: number, errorDescription: string) => {
   line-height: 1.5;
 }
 
-.retry-button {
-  background-color: #3498db;
-  color: white;
+.button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.retry-button,
+.settings-button {
   border: none;
   padding: 10px 20px;
   border-radius: 4px;
@@ -235,8 +249,22 @@ const onLoadComponentError = (errorCode: number, errorDescription: string) => {
   transition: background-color 0.3s;
 }
 
+.retry-button {
+  background-color: #3498db;
+  color: white;
+}
+
 .retry-button:hover {
   background-color: #2980b9;
+}
+
+.settings-button {
+  background-color: #27ae60;
+  color: white;
+}
+
+.settings-button:hover {
+  background-color: #229954;
 }
 
 .loading-container p {

@@ -47,15 +47,12 @@ File Browser is a **create-your-own-cloud-kind** of software where you can insta
 **功能描述：** 在文件列表中新增了 "拥有者" 和 "权限" 两列，提供更详细的文件系统信息。
 
 **实现思路：**
-- 后端：扩展文件信息结构体，添加 `Owner` 和 `Mode` 字段
+- 后端：扩展文件信息结构体，添加 `Owner` 和 `Perm` 字段
 - 前端：修改文件列表组件，增加对应的表格列显示
-- 权限显示采用 Unix 风格的八进制表示法（如 755, 644）
-- 拥有者信息通过系统调用获取用户名
 
 **相关文件修改：**
 - `files/file.go` - 扩展文件信息获取逻辑
 - `frontend/src/components/files/Listing.vue` - 前端列表显示组件
-- `frontend/src/i18n/` - 国际化文本支持
 
 ### 2. 文件夹大小信息显示
 
@@ -64,13 +61,6 @@ File Browser is a **create-your-own-cloud-kind** of software where you can insta
 **实现思路：**
 - 递归遍历文件夹结构计算总大小
 - 采用异步计算避免阻塞主线程
-- 支持大文件夹的分批计算和进度显示
-- 缓存机制避免重复计算
-
-**技术要点：**
-- 使用 `filepath.Walk` 进行目录遍历
-- 实现大小格式化显示（B, KB, MB, GB, TB）
-- 前端显示加载状态和计算进度
 
 ### 3. 移动端编辑器自适应
 
@@ -124,6 +114,19 @@ const isMobile = () => {
    - 嵌入 OnlyOffice 编辑器并加载文档
    - 处理文档保存回调
 
+4. **API 接口说明：**
+   - **`/api/onlyoffice/mapping`** (POST)
+     - 功能：获取 OnlyOffice 编辑器配置
+     - 请求参数：文件路径、用户ID、来源域名
+     - 返回：完整的 OnlyOffice 配置对象（包含文档信息、编辑器配置、JWT令牌等）
+     - 用途：前端初始化 OnlyOffice 编辑器时调用
+   
+   - **`/api/onlyoffice/callback`** (POST)
+     - 功能：处理 OnlyOffice 文档服务器的回调
+     - 请求参数：文档状态、下载URL、用户操作等
+     - 返回：处理结果状态
+     - 用途：文档编辑完成后自动保存到文件系统
+
 **Docker 部署示例：**
 ```bash
 # 启动 OnlyOffice 文档服务器
@@ -138,7 +141,6 @@ docker run -d --name onlyoffice-docs \
 - `settings/settings.go` - 添加 OnlyOffice 配置
 - `http/onlyoffice.go` - OnlyOffice API 接口
 - `frontend/src/views/settings/Global.vue` - 设置界面
-- `frontend/src/components/files/` - 文件预览组件
 
 ### 技术栈说明
 
