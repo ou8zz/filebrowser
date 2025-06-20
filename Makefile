@@ -39,7 +39,7 @@ lint: lint-frontend lint-backend ## Run all linters
 
 .PHONY: lint-frontend
 lint-frontend: ## Run frontend linters
-	$Q cd frontend && pnpm install --frozen-lockfile && pnpm run lint
+	$Q cd frontend && yarn --frozen-lockfile && yarn lint
 
 .PHONY: lint-backend
 lint-backend: | $(golangci-lint) ## Run backend linters
