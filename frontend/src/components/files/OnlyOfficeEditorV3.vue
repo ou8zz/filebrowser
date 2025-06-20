@@ -108,7 +108,7 @@ const getEditorConfigFromBackend = async () => {
         fileName: props.file.name,
         fileModified: props.file.modified,
         userId: user ? user.id : 'anonymous',
-        username: user?.username || '用户'
+        username: '张总'
       })
     });
     
