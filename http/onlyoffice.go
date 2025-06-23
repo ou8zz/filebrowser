@@ -150,8 +150,6 @@ func generateOnlyOfficeConfig(req OnlyOfficeConfigRequest, d *data) (*OnlyOffice
 	// Generate URLs
 	documentURL := fmt.Sprintf("%s/api/raw%s?auth=%s", req.Origin, req.FilePath, req.Auth)
 	callbackURL := fmt.Sprintf("%s/api/onlyoffice/callback?userId=%d", req.Origin, req.UserID)
-	fmt.Println("documentURL:", documentURL)
-	fmt.Println("callbackURL:", callbackURL)
 
 	// Create configuration
 	config := &OnlyOfficeConfig{
