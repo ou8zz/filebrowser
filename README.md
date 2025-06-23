@@ -64,7 +64,7 @@ File Browser is a **create-your-own-cloud-kind** of software where you can insta
 
 ### 3. 移动端编辑器自适应
 
-**功能描述：** 编辑器在移动设备上自动切换为简单文本编辑模式，解决 ACE 编辑器在移动设备上操作困难的问题。
+**功能描述：** 编辑器在移动设备上自动切换为简单文本编辑模式，解决 ACE 编辑器在移动设备上复制粘贴问题(ACE编辑器在移动设备上操作真离谱)。
 
 **实现思路：**
 - 设备检测：通过 User Agent 和屏幕宽度判断移动设备
