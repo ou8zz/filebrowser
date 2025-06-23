@@ -135,6 +135,13 @@ docker run -d --name onlyoffice-docs \
   -e JWT_ENABLED=true \
   -e JWT_SECRET=xxxxxxxx \
   onlyoffice/documentserver
+
+文档解除大小限制  
+docker exec office sed -i -e 's/104857600/504857600/g' /etc/onlyoffice/documentserver/default.json
+docker exec office sed -i -e 's/50MB/500MB/g' /etc/onlyoffice/documentserver/default.json
+docker exec office sed -i -e 's/104857600/1048576000/g' /etc/onlyoffice/documentserver-example/production-linux.json
+docker exec office service nginx restart
+docker exec office supervisorctl restart all
 ```
 
 **相关文件修改：**
