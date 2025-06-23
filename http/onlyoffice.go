@@ -78,7 +78,7 @@ type OnlyOfficeEditorConfig struct {
 }
 
 type OnlyOfficeUser struct {
-	ID   int    `json:"id"`
+	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -148,9 +148,10 @@ func generateOnlyOfficeConfig(req OnlyOfficeConfigRequest, d *data) (*OnlyOffice
 		return nil, fmt.Errorf("OnlyOffice服务未配置")
 	}
 	// Generate URLs
-	req.Origin = "http://192.168.0.23:3080"
 	documentURL := fmt.Sprintf("%s/api/raw%s?auth=%s", req.Origin, req.FilePath, req.Auth)
 	callbackURL := fmt.Sprintf("%s/api/onlyoffice/callback?userId=%d", req.Origin, req.UserID)
+	fmt.Println("documentURL:", documentURL)
+	fmt.Println("callbackURL:", callbackURL)
 
 	// Create configuration
 	config := &OnlyOfficeConfig{
@@ -172,7 +173,7 @@ func generateOnlyOfficeConfig(req OnlyOfficeConfigRequest, d *data) (*OnlyOffice
 			Mode: "edit",
 			Lang: "zh-CN",
 			User: OnlyOfficeUser{
-				ID:   req.UserID,
+				ID:   fmt.Sprintf("user_%d", req.UserID),
 				Name: req.Username,
 			},
 			Customization: OnlyOfficeCustomization{
@@ -216,7 +217,7 @@ func getDocumentType(fileExt string) string {
 	wordExts := []string{"doc", "docx", "docm", "dot", "dotx", "dotm", "odt", "fodt", "ott", "rtf", "txt"}
 	for _, ext := range wordExts {
 		if fileExt == ext {
-			return "text"
+			return "word"
 		}
 	}
 
@@ -224,7 +225,7 @@ func getDocumentType(fileExt string) string {
 	excelExts := []string{"xls", "xlsx", "xlsm", "xlt", "xltx", "xltm", "ods", "fods", "ots", "csv"}
 	for _, ext := range excelExts {
 		if fileExt == ext {
-			return "spreadsheet"
+			return "cell"
 		}
 	}
 
@@ -232,11 +233,11 @@ func getDocumentType(fileExt string) string {
 	pptExts := []string{"ppt", "pptx", "pptm", "pot", "potx", "potm", "odp", "fodp", "otp"}
 	for _, ext := range pptExts {
 		if fileExt == ext {
-			return "presentation"
+			return "slide"
 		}
 	}
 
-	return "text" // Default to text
+	return "word"
 }
 
 // generateJWTToken generates JWT token for OnlyOffice configuration
