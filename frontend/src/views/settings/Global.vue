@@ -5,8 +5,12 @@
       <form class="card" @submit.prevent="save">
         <div class="card-title">
           <h2>{{ t("settings.globalSettings") }}</h2>
+          <input
+            class="button button--flat"
+            type="submit"
+            :value="t('buttons.update')"
+          />
         </div>
-
         <div class="card-content">
           <h3>{{ t("settings.onlyoffice") }}</h3>
 
@@ -25,6 +29,21 @@
               v-model="settings.onlyoffice.host"
               placeholder="https://your-onlyoffice-server.com"
             />
+          </p>
+
+          <p>
+            <label for="onlyoffice-filebrowser-url">{{ t("settings.onlyofficeFilebrowserUrl") }}</label>
+            <input
+              class="input input--block"
+              type="text"
+              v-model="settings.onlyoffice.filebrowserUrl"
+              placeholder="http://filebrowser:80"
+            />
+          </p>
+
+          <p>
+            <input type="checkbox" v-model="settings.onlyoffice.forceSave" />
+            {{ t("settings.onlyofficeForceSave") }}
           </p>
 
           <p>

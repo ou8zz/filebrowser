@@ -16,9 +16,11 @@ type AuthMethod string
 
 // OnlyOffice contains OnlyOffice integration settings.
 type OnlyOffice struct {
-	Enabled   bool   `json:"enabled"`
-	Host      string `json:"host"`
-	JwtSecret string `json:"jwtSecret"`
+	Enabled        bool   `json:"enabled"`
+	Host           string `json:"host"`
+	FileBrowserURL string `json:"filebrowserUrl"`
+	ForceSave      bool   `json:"forceSave"`
+	JwtSecret      string `json:"jwtSecret"`
 }
 
 // Settings contain the main settings of the application.

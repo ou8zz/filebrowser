@@ -122,6 +122,21 @@ func onlyOfficeMappingHandler(w http.ResponseWriter, r *http.Request, d *data) (
 
 	// Generate OnlyOffice configuration
 	configReq.Origin = r.Header.Get("Origin")
+	if configReq.Origin == "" {
+		scheme := "http"
+		if proto := strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Proto"), ",")[0]); proto != "" {
+			scheme = proto
+		} else if r.TLS != nil {
+			scheme = "https"
+		}
+
+		host := r.Host
+		if forwardedHost := strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Host"), ",")[0]); forwardedHost != "" {
+			host = forwardedHost
+		}
+
+		configReq.Origin = scheme + "://" + host
+	}
 	config, err := generateOnlyOfficeConfig(configReq, d)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to generate config: %v", err)
@@ -147,9 +162,15 @@ func generateOnlyOfficeConfig(req OnlyOfficeConfigRequest, d *data) (*OnlyOffice
 	if !d.settings.OnlyOffice.Enabled || d.settings.OnlyOffice.Host == "" {
 		return nil, fmt.Errorf("OnlyOffice服务未配置")
 	}
+
+	baseURL := strings.TrimRight(req.Origin, "/")
+	if strings.TrimSpace(d.settings.OnlyOffice.FileBrowserURL) != "" {
+		baseURL = strings.TrimRight(strings.TrimSpace(d.settings.OnlyOffice.FileBrowserURL), "/")
+	}
+
 	// Generate URLs
-	documentURL := fmt.Sprintf("%s/api/raw%s?auth=%s", req.Origin, req.FilePath, req.Auth)
-	callbackURL := fmt.Sprintf("%s/api/onlyoffice/callback?userId=%d", req.Origin, req.UserID)
+	documentURL := fmt.Sprintf("%s/api/raw%s?auth=%s", baseURL, req.FilePath, req.Auth)
+	callbackURL := fmt.Sprintf("%s/api/onlyoffice/callback?userId=%d", baseURL, req.UserID)
 
 	// Create configuration
 	config := &OnlyOfficeConfig{
@@ -176,7 +197,7 @@ func generateOnlyOfficeConfig(req OnlyOfficeConfigRequest, d *data) (*OnlyOffice
 			},
 			Customization: OnlyOfficeCustomization{
 				Autosave:  true,
-				Forcesave: false,
+				Forcesave: d.settings.OnlyOffice.ForceSave,
 			},
 			CallbackURL: callbackURL,
 		},

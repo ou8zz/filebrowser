@@ -206,13 +206,13 @@ export default {
     },
     getHumanSize: async function () {
       let urls = '';
-      for (let selected of this.selected) {
+      for (const selected of this.selected) {
         urls += this.req.items[selected].path + ',';
       }
 
       const res = await fetchURL(`/api/size?paths=${urls}`, {});
       console.log("res", res);
-      let data = await res.json();
+      const data = await res.json();
       console.log("data.info:", data);
       humanSize.value = filesize(data.size);
     },

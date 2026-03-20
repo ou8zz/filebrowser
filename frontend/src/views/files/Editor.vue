@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
 const switchAce = () => {
   const fileContent = fileStore.req?.content || "";
   isAce.value = !isAce.value;
-  if(isAce) {
+  if (isAce.value) {
     isPreview.value = false;
     codeValue.value = fileContent;
   } else {
@@ -184,7 +184,7 @@ const save = async () => {
     let val = editor.value?.getValue();
     if (!isAce.value) {
        val = codeValue.value;
-       console.log("save ace:", isAce, val);
+       console.log("save ace:", isAce.value, val);
     }
     await api.put(route.path, val);
     editor.value?.session.getUndoManager().markClean();

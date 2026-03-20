@@ -203,6 +203,8 @@
     "onlyofficeHelp": "配置 OnlyOffice 文档服务器集成，用于在线文档编辑。",
     "enableOnlyOffice": "启用 OnlyOffice 集成",
     "onlyofficeHost": "OnlyOffice 服务器地址",
+    "onlyofficeFilebrowserUrl": "FileBrowser 内网地址（OnlyOffice 拉取/回调）",
+    "onlyofficeForceSave": "启用强制保存回调（每次保存写回文件）",
     "onlyofficeJwtSecret": "OnlyOffice JWT 密钥",
     "password": "密码",
     "passwordUpdated": "密码已更新！",

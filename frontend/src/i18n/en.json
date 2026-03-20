@@ -203,6 +203,8 @@
     "onlyofficeHelp": "Configure OnlyOffice document server integration for online document editing.",
     "enableOnlyOffice": "Enable OnlyOffice Integration",
     "onlyofficeHost": "OnlyOffice Server Host",
+    "onlyofficeFilebrowserUrl": "FileBrowser private URL (OnlyOffice fetch/callback)",
+    "onlyofficeForceSave": "Enable force-save callbacks (write back on save)",
     "onlyofficeJwtSecret": "OnlyOffice JWT Secret",
     "password": "Password",
     "passwordUpdated": "Password updated!",

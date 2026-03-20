@@ -40,6 +40,8 @@ interface SettingsTus {
 interface SettingsOnlyOffice {
   enabled: boolean;
   host: string;
+  filebrowserUrl?: string;
+  forceSave?: boolean;
   jwtSecret?: string;
 }
 
