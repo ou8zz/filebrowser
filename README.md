@@ -97,27 +97,31 @@ const isMobile = () => {
 1. **后端配置结构：**
    ```go
    type OnlyOfficeConfig struct {
-       Enabled bool   `json:"enabled"`
-       Host     string `json:"host"`
-       JwtSecret string `json:"jwtSecret"`
+       Enabled        bool   `json:"enabled"`
+       Host           string `json:"host"`
+       FileBrowserURL string `json:"filebrowserUrl"`
+       ForceSave      bool   `json:"forceSave"`
+       JwtSecret      string `json:"jwtSecret"`
    }
    ```
 
 2. **前端设置界面：**
    - 启用/禁用 OnlyOffice 集成的开关
    - OnlyOffice 服务器地址配置
+   - FileBrowser 内网地址（供 OnlyOffice 服务器侧拉取/回调使用）
+   - 强制保存回调（ForceSave）开关
    - 支持的文件格式说明
 
 3. **文档编辑流程：**
    - 检测文件类型是否支持 OnlyOffice
-   - 生成临时访问令牌和回调 URL
-   - 嵌入 OnlyOffice 编辑器并加载文档
+   - 前端通过后端接口获取 OnlyOffice 完整配置（包含 token、document.url、callbackUrl）
+   - 动态加载 OnlyOffice DocsAPI 并初始化编辑器
    - 处理文档保存回调
 
 4. **API 接口说明：**
    - **`/api/onlyoffice/mapping`** (POST)
      - 功能：获取 OnlyOffice 编辑器配置
-     - 请求参数：文件路径、用户ID、来源域名
+     - 请求参数：文件路径、文件名、修改时间、用户信息（userId/username）
      - 返回：完整的 OnlyOffice 配置对象（包含文档信息、编辑器配置、JWT令牌等）
      - 用途：前端初始化 OnlyOffice 编辑器时调用
    
@@ -127,14 +131,26 @@ const isMobile = () => {
      - 返回：处理结果状态
      - 用途：文档编辑完成后自动保存到文件系统
 
+5. **性能优化（推荐）：OnlyOffice↔FileBrowser 走内网**
+   - 背景：OnlyOffice Document Server 是“服务器端”拉取 `document.url`，并向 `callbackUrl` 回调保存。如果这两个 URL 指向公网域名，会导致文件在公网绕一圈（慢且浪费带宽）。
+   - 方案：浏览器仍通过公网域名访问 FileBrowser/OnlyOffice；但服务器互访使用内网地址。
+   - 配置：设置 `onlyoffice.filebrowserUrl` 为 OnlyOffice 容器可直连的地址，例如 `http://filebrowser:80`（同 docker network 的 service name）。
+   - 效果：打开文档时 OnlyOffice 拉取文件走内网；保存回调也走内网，整体延迟明显下降。
+
+6. **保存回写（推荐）：ForceSave 让“点保存就更新”**
+   - 背景：OnlyOffice 默认常见行为是“关闭文档时”才触发最终保存回调（status=2），所以你会看到点保存但 FileBrowser 文件不更新。
+   - 方案：启用 `onlyoffice.forceSave`，让 OnlyOffice 在用户点击保存时触发 force save 回调（status=6），后端收到回调后下载 `callback.url` 并覆盖写回原文件。
+   - 注意：需要保证 FileBrowser 可以访问 OnlyOffice 提供的 `callback.url`（建议同样通过内网可达）。
+
 **Docker 部署示例：**
 ```bash
 # 启动 OnlyOffice 文档服务器
 docker run -d --name onlyoffice-docs \
   -p 6066:80 \
+  -e TZ=Asia/Shanghai \
   -e JWT_ENABLED=true \
   -e JWT_SECRET=xxxxxxxx \
-  onlyoffice/documentserver
+  onlyoffice/documentserver:9.3
 
 文档解除大小限制  
 docker exec office sed -i -e 's/104857600/504857600/g' /etc/onlyoffice/documentserver/default.json
