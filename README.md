@@ -115,6 +115,8 @@ const isMobile = () => {
 
 **Docker 部署示例：**
 ```bash
+Dockerfile里面的uid调整为99:100
+
 ./build 1.0.0
 
 # 启动 OnlyOffice 文档服务器
