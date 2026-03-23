@@ -1,9 +1,6 @@
 ## Multistage build: First stage fetches dependencies
 FROM alpine:3.23 AS fetcher
 
-
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-
 # install and copy ca-certificates, mailcap, and tini-static; download JSON.sh
 RUN apk update && \
     apk --no-cache add ca-certificates mailcap tini-static && \
@@ -13,18 +10,14 @@ RUN apk update && \
 FROM busybox:1.37.0-musl
 
 # Define non-root user UID and GID
-ENV UID=1000
-ENV GID=1000
-
-# Create user group and user
-RUN addgroup -g $GID user && \
-    adduser -D -u $UID -G user user
+ENV UID=99
+ENV GID=100
 
 # Copy binary, scripts, and configurations into image with proper ownership
-COPY --chown=user:user filebrowser /bin/filebrowser
-COPY --chown=user:user docker/common/ /
-COPY --chown=user:user docker/alpine/ /
-COPY --chown=user:user --from=fetcher /sbin/tini-static /bin/tini
+COPY --chown=99:100 filebrowser /bin/filebrowser
+COPY --chown=99:100 docker/common/ /
+COPY --chown=99:100 docker/alpine/ /
+COPY --chown=99:100 --from=fetcher /sbin/tini-static /bin/tini
 COPY --from=fetcher /JSON.sh /JSON.sh
 COPY --from=fetcher /etc/ca-certificates.conf /etc/ca-certificates.conf
 COPY --from=fetcher /etc/ca-certificates /etc/ca-certificates
@@ -33,25 +26,17 @@ COPY --from=fetcher /etc/ssl /etc/ssl
 
 # Create data directories, set ownership, and ensure healthcheck script is executable
 RUN mkdir -p /config /database /srv && \
-    chown -R user:user /config /database /srv \
+    chown -R 99:100 /config /database /srv \
     && chmod +x /healthcheck.sh
 
 # Define healthcheck script
 HEALTHCHECK --start-period=2s --interval=5s --timeout=3s CMD /healthcheck.sh
 
 # Set the user, volumes and exposed ports
-USER user
+USER 99:100
 
 VOLUME /srv /config /database
 
-VOLUME /srv
 EXPOSE 80
 
-# <<<<<<< HEAD
-# COPY docker_config.json /.filebrowser.json
-# COPY filebrowser /filebrowser
-
-# ENTRYPOINT [ "/filebrowser" ]
-# =======
 ENTRYPOINT [ "tini", "--", "/init.sh" ]
-

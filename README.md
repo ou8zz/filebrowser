@@ -8,6 +8,143 @@
 [![Version](https://img.shields.io/github/release/filebrowser/filebrowser.svg?style=flat-square)](https://github.com/filebrowser/filebrowser/releases/latest)
 [![Chat IRC](https://img.shields.io/badge/freenode-%23filebrowser-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23filebrowser)
 
+
+## 源码增强功能 (Enhanced Features)
+
+基于原版 File Browser，本项目在源码基础上进行了以下重要增强：
+
+### 1. 文件列表增强显示
+
+**功能描述：** 在文件列表中新增了 "拥有者" 和 "权限" 两列，提供更详细的文件系统信息。
+
+**实现思路：**
+- 后端：扩展文件信息结构体，添加 `Owner` 和 `Perm` 字段
+- 前端：修改文件列表组件，增加对应的表格列显示
+
+**相关文件修改：**
+- `files/file.go` - 扩展文件信息获取逻辑
+- `frontend/src/components/files/Listing.vue` - 前端列表显示组件
+
+### 2. 文件夹大小信息显示
+
+**功能描述：** 在文件夹的详细信息（info）中显示文件夹的总大小，包含所有子文件和子文件夹。
+
+**实现思路：**
+- 递归遍历文件夹结构计算总大小
+- 采用异步计算避免阻塞主线程
+
+### 3. 移动端编辑器自适应
+
+**功能描述：** 编辑器在移动设备上自动切换为简单文本编辑模式，解决 ACE 编辑器在移动设备上复制粘贴问题(ACE编辑器在移动设备上操作真离谱)。
+
+**实现思路：**
+- 设备检测：通过 User Agent 和屏幕宽度判断移动设备
+- 自动切换：移动设备默认使用 textarea，桌面设备使用 ACE 编辑器
+- 保留手动切换功能，用户可根据需要在两种模式间切换
+
+**检测逻辑：**
+```javascript
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+         window.innerWidth <= 768;
+};
+```
+
+**相关文件：**
+- `frontend/src/views/files/Editor.vue` - 编辑器主组件
+
+### 4. OnlyOffice 文档预览与编辑
+
+**功能描述：** 集成 OnlyOffice 文档服务器，支持 Word、Excel、PowerPoint 等 Office 文档的在线预览和编辑。
+
+**架构设计：**
+- **后端集成：** 新增 OnlyOffice 配置和 API 接口
+- **前端组件：** 嵌入 OnlyOffice 编辑器组件
+- **设置管理：** 管理员可配置 OnlyOffice 服务器地址
+- **文件支持：** 支持 .docx, .xlsx, .pptx 等主流格式
+
+**实现要点：**
+
+1. **后端配置结构：**
+   ```go
+   type OnlyOfficeConfig struct {
+       Enabled        bool   `json:"enabled"`
+       Host           string `json:"host"`
+       FileBrowserURL string `json:"filebrowserUrl"`
+       ForceSave      bool   `json:"forceSave"`
+       JwtSecret      string `json:"jwtSecret"`
+   }
+   ```
+
+2. **前端设置界面：**
+   - 启用/禁用 OnlyOffice 集成的开关
+   - OnlyOffice 服务器地址配置
+   - FileBrowser 内网地址（供 OnlyOffice 服务器侧拉取/回调使用）
+   - 强制保存回调（ForceSave）开关
+   - 支持的文件格式说明
+
+3. **文档编辑流程：**
+   - 检测文件类型是否支持 OnlyOffice
+   - 前端通过后端接口获取 OnlyOffice 完整配置（包含 token、document.url、callbackUrl）
+   - 动态加载 OnlyOffice DocsAPI 并初始化编辑器
+   - 处理文档保存回调
+
+4. **API 接口说明：**
+   - **`/api/onlyoffice/mapping`** (POST)
+     - 功能：获取 OnlyOffice 编辑器配置
+     - 请求参数：文件路径、文件名、修改时间、用户信息（userId/username）
+     - 返回：完整的 OnlyOffice 配置对象（包含文档信息、编辑器配置、JWT令牌等）
+     - 用途：前端初始化 OnlyOffice 编辑器时调用
+   
+   - **`/api/onlyoffice/callback`** (POST)
+     - 功能：处理 OnlyOffice 文档服务器的回调
+     - 请求参数：文档状态、下载URL、用户操作等
+     - 返回：处理结果状态
+     - 用途：文档编辑完成后自动保存到文件系统
+
+5. **性能优化（推荐）：OnlyOffice↔FileBrowser 走内网**
+   - 背景：OnlyOffice Document Server 是“服务器端”拉取 `document.url`，并向 `callbackUrl` 回调保存。如果这两个 URL 指向公网域名，会导致文件在公网绕一圈（慢且浪费带宽）。
+   - 方案：浏览器仍通过公网域名访问 FileBrowser/OnlyOffice；但服务器互访使用内网地址。
+   - 配置：设置 `onlyoffice.filebrowserUrl` 为 OnlyOffice 容器可直连的地址，例如 `http://filebrowser:80`（同 docker network 的 service name）。
+   - 效果：打开文档时 OnlyOffice 拉取文件走内网；保存回调也走内网，整体延迟明显下降。
+
+6. **保存回写（推荐）：ForceSave 让“点保存就更新”**
+   - 背景：OnlyOffice 默认常见行为是“关闭文档时”才触发最终保存回调（status=2），所以你会看到点保存但 FileBrowser 文件不更新。
+   - 方案：启用 `onlyoffice.forceSave`，让 OnlyOffice 在用户点击保存时触发 force save 回调（status=6），后端收到回调后下载 `callback.url` 并覆盖写回原文件。
+   - 注意：需要保证 FileBrowser 可以访问 OnlyOffice 提供的 `callback.url`（建议同样通过内网可达）。
+
+**Docker 部署示例：**
+```bash
+# 启动 OnlyOffice 文档服务器
+docker run -d --name onlyoffice-docs \
+  -p 6066:80 \
+  -e TZ=Asia/Shanghai \
+  -e JWT_ENABLED=true \
+  -e JWT_SECRET=xxxxxxxx \
+  onlyoffice/documentserver:9.3
+
+文档解除大小限制  
+docker exec office sed -i -e 's/104857600/504857600/g' /etc/onlyoffice/documentserver/default.json
+docker exec office sed -i -e 's/50MB/500MB/g' /etc/onlyoffice/documentserver/default.json
+docker exec office sed -i -e 's/104857600/1048576000/g' /etc/onlyoffice/documentserver-example/production-linux.json
+docker exec office service nginx restart
+docker exec office supervisorctl restart all
+```
+
+**相关文件修改：**
+- `settings/settings.go` - 添加 OnlyOffice 配置
+- `http/onlyoffice.go` - OnlyOffice API 接口
+- `frontend/src/views/settings/Global.vue` - 设置界面
+
+### 技术栈说明
+
+- **后端：** Go 1.23, 基于原有架构扩展
+- **前端：** Vue 3 + TypeScript, 保持原有技术栈
+- **文档服务：** OnlyOffice Document Server
+- **部署：** 支持 Docker 容器化部署
+
+
+
 filebrowser provides a file managing interface within a specified directory and it can be used to upload, delete, preview, rename and edit your files. It allows the creation of multiple users and each user can have its own directory. It can be used as a standalone app.
 
 > [!WARNING]
