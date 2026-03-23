@@ -43,7 +43,6 @@ HEALTHCHECK --start-period=2s --interval=5s --timeout=3s CMD /healthcheck.sh
 USER user
 
 VOLUME /srv /config /database
->>>>>>> b5f970731be11d3fc8f59b194b15089b6c13bd5f
 
 VOLUME /srv
 EXPOSE 80
