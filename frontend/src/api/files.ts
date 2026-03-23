@@ -2,14 +2,33 @@ import { useAuthStore } from "@/stores/auth";
 import { useLayoutStore } from "@/stores/layout";
 import { baseURL } from "@/utils/constants";
 import { upload as postTus, useTus } from "./tus";
-import { createURL, fetchURL, removePrefix } from "./utils";
+import { createURL, fetchURL, removePrefix, StatusError } from "./utils";
+import { isEncodableResponse, makeRawResource } from "@/utils/encodings";
 
-export async function fetch(url: string) {
+export async function fetch(url: string, signal?: AbortSignal) {
+  const encoding = isEncodableResponse(url);
   url = removePrefix(url);
+  const res = await fetchURL(`/api/resources${url}`, {
+    signal,
+    headers: {
+      "X-Encoding": encoding ? "true" : "false",
+    },
+  });
 
-  const res = await fetchURL(`/api/resources${url}`, {});
-
-  const data = (await res.json()) as Resource;
+  let data: Resource;
+  try {
+    if (res.headers.get("Content-Type") == "application/octet-stream") {
+      data = await makeRawResource(res, url);
+    } else {
+      data = (await res.json()) as Resource;
+    }
+  } catch (e) {
+    // Check if the error is an intentional cancellation
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new StatusError("000 No connection", 0, true);
+    }
+    throw e;
+  }
   data.url = `/files${url}`;
 
   if (data.isDir) {
@@ -75,11 +94,6 @@ export function download(format: any, ...files: string[]) {
     url += `algo=${format}&`;
   }
 
-  const authStore = useAuthStore();
-  if (authStore.jwt) {
-    url += `auth=${authStore.jwt}&`;
-  }
-
   window.open(url);
 }
 
@@ -137,9 +151,9 @@ async function postResources(
       if (request.status === 200) {
         resolve(request.responseText);
       } else if (request.status === 409) {
-        reject(request.status);
+        reject(new Error(request.status.toString()));
       } else {
-        reject(request.responseText);
+        reject(new Error(request.responseText));
       }
     };
 
@@ -163,9 +177,12 @@ function moveCopy(
   for (const item of items) {
     const from = item.from;
     const to = encodeURIComponent(removePrefix(item.to ?? ""));
+    const finalOverwrite =
+      item.overwrite == undefined ? overwrite : item.overwrite;
+    const finalRename = item.rename == undefined ? rename : item.rename;
     const url = `${from}?action=${
       copy ? "copy" : "rename"
-    }&destination=${to}&override=${overwrite}&rename=${rename}`;
+    }&destination=${to}&override=${finalOverwrite}&rename=${finalRename}`;
     promises.push(resourceAction(url, "PATCH"));
   }
   layoutStore.closeHovers();
@@ -210,10 +227,18 @@ export function getSubtitlesURL(file: ResourceItem) {
   return file.subtitles?.map((d) => createURL("api/subtitle" + d, params));
 }
 
-export async function usage(url: string) {
+export async function usage(url: string, signal: AbortSignal) {
   url = removePrefix(url);
 
-  const res = await fetchURL(`/api/usage${url}`, {});
+  const res = await fetchURL(`/api/usage${url}`, { signal });
 
-  return await res.json();
+  try {
+    return await res.json();
+  } catch (e) {
+    // Check if the error is an intentional cancellation
+    if (e instanceof Error && e.name == "AbortError") {
+      throw new StatusError("000 No connection", 0, true);
+    }
+    throw e;
+  }
 }

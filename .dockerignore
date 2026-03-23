@@ -1,4 +1,13 @@
+
 *
 !docker/*
 !filebrowser
 !*.json
+.venv
+dist
+.idea
+frontend/node_modules
+frontend/dist
+filebrowser.db
+docs/index.md
+

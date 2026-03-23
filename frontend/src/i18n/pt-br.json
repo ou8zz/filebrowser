@@ -7,11 +7,13 @@
     "copy": "Copiar",
     "copyFile": "Copiar arquivo",
     "copyToClipboard": "Copiar",
+    "copyDownloadLinkToClipboard": "Copy download link to clipboard",
     "create": "Criar",
     "delete": "Apagar",
     "download": "Baixar",
     "file": "Arquivo",
     "folder": "Pasta",
+    "fullScreen": "Toggle full screen",
     "hideDotfiles": "Ocultar dotfiles",
     "info": "Informações",
     "more": "Mais",
@@ -22,6 +24,7 @@
     "ok": "OK",
     "permalink": "Obter link permanente",
     "previous": "Anterior",
+    "preview": "Preview",
     "publish": "Publicar",
     "rename": "Renomear",
     "replace": "Substituir",
@@ -39,10 +42,17 @@
     "update": "Atualizar",
     "upload": "Enviar",
     "openFile": "Abrir",
-    "copyDownloadLinkToClipboard": "Copiar link de download para a área de transferência",
-    "fullScreen": "Alternar tela cheia",
-    "preview": "Pré-visualizar",
-    "discardChanges": "Descartar"
+    "openDirect": "View raw",
+    "discardChanges": "Discard",
+    "stopSearch": "Stop searching",
+    "saveChanges": "Save changes",
+    "editAsText": "Edit as Text",
+    "increaseFontSize": "Increase font size",
+    "decreaseFontSize": "Decrease font size",
+    "overrideAll": "Replace all files in destination folder",
+    "skipAll": "Skip all conflicting files",
+    "renameAll": "Rename all files (create a copy)",
+    "singleDecision": "Decide for each conflicting file"
   },
   "download": {
     "downloadFile": "Baixar arquivo",
@@ -50,7 +60,7 @@
     "downloadSelected": "Baixar selecionado"
   },
   "upload": {
-    "abortUpload": "Tem certeza de que deseja abortar o upload?"
+    "abortUpload": "Are you sure you wish to abort?"
   },
   "errors": {
     "forbidden": "Você não tem permissões para acessar isto.",
@@ -65,8 +75,8 @@
     "folders": "Pastas",
     "home": "Início",
     "lastModified": "Última modificação",
-    "loading": "Carregando...",
-    "lonely": "Não há nada aqui...",
+    "loading": "Carregando. Aguarde, por favor.",
+    "lonely": "Não existe nada aqui.",
     "metadata": "Metadados",
     "multipleSelectionEnabled": "Seleção múltipla ativada",
     "name": "Nome",
@@ -74,18 +84,28 @@
     "sortByLastModified": "Ordenar pela última modificação",
     "sortByName": "Ordenar pelo nome",
     "sortBySize": "Ordenar pelo tamanho",
-    "noPreview": "Pré-visualização não disponível para este arquivo."
+    "noPreview": "Pré-visualização não disponível para este arquivo.",
+    "csvTooLarge": "CSV file is too large for preview (>5MB). Please download to view.",
+    "csvLoadFailed": "Failed to load CSV file.",
+    "showingRows": "Showing {count} row(s)",
+    "columnSeparator": "Column Separator",
+    "csvSeparators": {
+      "comma": "Comma (,)",
+      "semicolon": "Semicolon (;)",
+      "both": "Both (,) and (;)"
+    },
+    "fileEncoding": "File Encoding"
   },
   "help": {
     "click": "selecionar pasta ou arquivo",
     "ctrl": {
       "click": "selecionar várias pastas e arquivos",
-      "f": "abrir pesquisa",
+      "f": "pesquisar",
       "s": "salvar um arquivo ou baixar a pasta que você está"
     },
     "del": "apagar os arquivos selecionados",
     "doubleClick": "abrir pasta ou arquivo",
-    "esc": "limpar seleção e/ou fechar prompt",
+    "esc": "limpar seleção e/ou fechar menu",
     "f1": "esta informação",
     "f2": "renomear arquivo",
     "help": "Ajuda"
@@ -100,7 +120,11 @@
     "submit": "Login",
     "username": "Nome do usuário",
     "usernameTaken": "Nome de usuário já existe",
-    "wrongCredentials": "Ops! Dados incorretos."
+    "wrongCredentials": "Ops! Dados incorretos.",
+    "passwordTooShort": "Password must be at least {min} characters",
+    "logout_reasons": {
+      "inactivity": "You have been logged out due to inactivity."
+    }
   },
   "permanent": "Permanente",
   "prompts": {
@@ -110,6 +134,7 @@
     "deleteMessageMultiple": "Deseja apagar {count} arquivo(s)?",
     "deleteMessageSingle": "Deseja apagar esta pasta/arquivo?",
     "deleteMessageShare": "Deseja apagar este compartilhamento ({path})?",
+    "deleteUser": "Are you sure you want to delete this user?",
     "deleteTitle": "Apagar arquivos",
     "displayName": "Nome:",
     "download": "Baixar arquivos",
@@ -130,7 +155,7 @@
     "rename": "Renomear",
     "renameMessage": "Insira um novo nome para",
     "replace": "Substituir",
-    "replaceMessage": "Um dos arquivos que você está tentando enviar possui um nome conflitante. Deseja pular este arquivo e continuar o envio ou substituir o existente?\n",
+    "replaceMessage": "Já existe um arquivo com nome igual a um dos que está tentando enviar. Deseja substituir?\n",
     "schedule": "Agendar",
     "scheduleMessage": "Escolha uma data para agendar a publicação deste post.",
     "show": "Mostrar",
@@ -139,9 +164,20 @@
     "uploadFiles": "Enviando {files} arquivos...",
     "uploadMessage": "Selecione uma opção para enviar.",
     "optionalPassword": "Senha opcional",
-    "deleteUser": "Tem certeza de que deseja apagar este usuário?",
-    "resolution": "Resolução",
-    "discardEditorChanges": "Tem certeza de que deseja descartar as alterações feitas?"
+    "resolution": "Resolution",
+    "discardEditorChanges": "Are you sure you wish to discard the changes you've made?",
+    "replaceOrSkip": "Replace or skip files",
+    "resolveConflict": "Which files do you want to keep?",
+    "singleConflictResolve": "If you select both versions, a number will be added to the name of the copied file.",
+    "fastConflictResolve": "The destination folder there are {count} files with same name.",
+    "uploadingFiles": "Uploading files",
+    "filesInOrigin": "Files in origin",
+    "filesInDest": "Files in destination",
+    "override": "Overwrite",
+    "skip": "Skip",
+    "forbiddenError": "Forbidden Error",
+    "currentPassword": "Your password",
+    "currentPasswordMessage": "Enter your password to validate this action."
   },
   "search": {
     "images": "Imagens",
@@ -154,6 +190,7 @@
     "video": "Vídeos"
   },
   "settings": {
+    "aceEditorTheme": "Ace editor theme",
     "admin": "Admin",
     "administrator": "Administrador",
     "allowCommands": "Executar comandos",
@@ -161,6 +198,7 @@
     "allowNew": "Criar novos arquivos e pastas",
     "allowPublish": "Publicar novas páginas e conteúdos",
     "allowSignup": "Permitir cadastro de usuários",
+    "hideLoginButton": "Hide the login button from public pages",
     "avoidChanges": "(deixe em branco para manter)",
     "branding": "Customização",
     "brandingDirectoryPath": "Diretório de customização",
@@ -169,7 +207,12 @@
     "commandRunner": "Execução de comandos",
     "commandRunnerHelp": "Aqui você pode definir comandos que serão executados nos eventos descritos. Escreva um por linha. As variáveis de ambiente {0} e {1} estão disponíveis, sendo {0} relativo a {1}. Para mais informações sobre esta função e as variáveis de ambiente disponíveis, leia a {2}.",
     "commandsUpdated": "Comandos atualizados!",
-    "createUserDir": "Criar diretório Home do usuário automaticamente ao adicionar novo usuário",
+    "createUserDir": "Criar diretório Home para novos usuários",
+    "minimumPasswordLength": "Minimum password length",
+    "tusUploads": "Chunked Uploads",
+    "tusUploadsHelp": "File Browser supports chunked file uploads, allowing for the creation of efficient, reliable, resumable and chunked file uploads even on unreliable networks.",
+    "tusUploadsChunkSize": "Indicates to maximum size of a request (direct uploads will be used for smaller uploads). You may input a plain integer denoting byte size input or a string like 10MB, 1GB etc.",
+    "tusUploadsRetryCount": "Number of retries to perform if a chunk fails to upload.",
     "userHomeBasePath": "Caminho base para diretórios de usuários",
     "userScopeGenerationPlaceholder": "O escopo será gerado automaticamente",
     "createUserHomeDirectory": "Criar diretório Home de usuário",
@@ -194,7 +237,7 @@
     "newUser": "Novo usuário",
     "password": "Senha",
     "passwordUpdated": "Senha atualizada!",
-    "path": "Caminho",
+    "path": "Path",
     "perm": {
       "create": "Criar arquivos e diretórios",
       "delete": "Apagar arquivos e diretórios",
@@ -207,6 +250,7 @@
     "permissions": "Permissões",
     "permissionsHelp": "Pode definir o usuário como administrador ou escolher as permissões manualmente. Se selecionar a opção \"Administrador\", todas as outras opções serão automaticamente selecionadas. A gestão dos usuários é um privilégio restringido aos administradores.\n",
     "profileSettings": "Configurações do usuário",
+    "redirectAfterCopyMove": "Redirect to destination after copy/move",
     "ruleExample1": "previne o acesso a qualquer \"dotfile\" (como .git, .gitignore) em qualquer pasta\n",
     "ruleExample2": "bloqueia o acesso ao arquivo chamado Caddyfile.",
     "rules": "Regras",
@@ -219,7 +263,7 @@
     "shareDeleted": "Compartilhamento apagado!",
     "singleClick": "Usar clique único para abrir arquivos e diretórios",
     "themes": {
-      "default": "Padrão do sistema",
+      "default": "System default",
       "dark": "Escuro",
       "light": "Claro",
       "title": "Tema"
@@ -233,14 +277,15 @@
     "userManagement": "Gerenciamento de usuários",
     "userUpdated": "Usuário atualizado!",
     "username": "Nome do usuário",
-    "users": "Usuários"
+    "users": "Usuários",
+    "currentPassword": "Your Current Password"
   },
   "sidebar": {
     "help": "Ajuda",
     "hugoNew": "Hugo New",
     "login": "Login",
     "logout": "Sair",
-    "myFiles": "Meus arquivos",
+    "myFiles": "Arquivos",
     "newFile": "Novo arquivo",
     "newFolder": "Nova pasta",
     "preview": "Pré-visualizar",
@@ -256,6 +301,6 @@
     "hours": "Horas",
     "minutes": "Minutos",
     "seconds": "Segundos",
-    "unit": "Unidade de tempo"
+    "unit": "Unidades de Tempo"
   }
 }

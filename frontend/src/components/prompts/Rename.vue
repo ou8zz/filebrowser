@@ -6,7 +6,7 @@
 
     <div class="card-content">
       <p>
-        {{ $t("prompts.renameMessage") }} <code>{{ oldName() }}</code
+        {{ $t("prompts.renameMessage") }} <code>{{ oldName }}</code
         >:
       </p>
       <input
@@ -33,6 +33,7 @@
         type="submit"
         :aria-label="$t('buttons.rename')"
         :title="$t('buttons.rename')"
+        :disabled="name === '' || name === oldName"
       >
         {{ $t("buttons.rename") }}
       </button>
@@ -46,6 +47,7 @@ import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 import url from "@/utils/url";
 import { files as api } from "@/api";
+import { removePrefix } from "@/api/utils";
 
 export default {
   name: "rename",
@@ -55,7 +57,7 @@ export default {
     };
   },
   created() {
-    this.name = this.oldName();
+    this.name = this.oldName;
   },
   inject: ["$showError"],
   computed: {
@@ -65,26 +67,29 @@ export default {
       "selectedCount",
       "isListing",
     ]),
-    ...mapWritableState(useFileStore, ["reload"]),
-  },
-  methods: {
-    ...mapActions(useLayoutStore, ["closeHovers"]),
-    cancel: function () {
-      this.closeHovers();
-    },
-    oldName: function () {
+    ...mapWritableState(useFileStore, ["reload", "preselect"]),
+    oldName() {
       if (!this.isListing) {
         return this.req.name;
       }
 
       if (this.selectedCount === 0 || this.selectedCount > 1) {
         // This shouldn't happen.
-        return;
+        return "";
       }
 
       return this.req.items[this.selected[0]].name;
     },
+  },
+  methods: {
+    ...mapActions(useLayoutStore, ["closeHovers"]),
+    cancel: function () {
+      this.closeHovers();
+    },
     submit: async function () {
+      if (this.name === "" || this.name === this.oldName) {
+        return;
+      }
       let oldLink = "";
       let newLink = "";
 
@@ -97,13 +102,14 @@ export default {
       newLink =
         url.removeLastDir(oldLink) + "/" + encodeURIComponent(this.name);
 
-      window.sessionStorage.setItem("modified", "true");
       try {
         await api.move([{ from: oldLink, to: newLink }]);
         if (!this.isListing) {
           this.$router.push({ path: newLink });
           return;
         }
+
+        this.preselect = removePrefix(newLink);
 
         this.reload = true;
       } catch (e) {

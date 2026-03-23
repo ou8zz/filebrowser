@@ -41,12 +41,12 @@ export function download(
   let url = `${baseURL}/api/public/dl/${hash}`;
 
   if (files.length === 1) {
-    url += encodeURIComponent(files[0]) + "?";
+    url += files[0] + "?";
   } else {
     let arg = "";
 
     for (const file of files) {
-      arg += encodeURIComponent(file) + ",";
+      arg += file + ",";
     }
 
     arg = arg.substring(0, arg.length - 1);
@@ -71,5 +71,5 @@ export function getDownloadURL(res: Resource, inline = false) {
     ...(res.token && { token: res.token }),
   };
 
-  return createURL("api/public/dl/" + res.hash + res.path, params, false);
+  return createURL("api/public/dl/" + res.hash + res.path, params);
 }

@@ -1,6 +1,5 @@
 @import "normalize.css/normalize.css";
 @import "vue-toastification/dist/index.css";
-@import "vue-final-modal/style.css";
 @import "./_variables.css";
 @import "./_buttons.css";
 @import "./_inputs.css";
@@ -17,6 +16,7 @@
 @import "./mobile.css";
 @import "./epubReader.css";
 @import "./mdPreview.css";
+@import "./context-menu.css";
 
 /* For testing only
  :focus {
@@ -97,7 +97,8 @@ main .spinner .bounce2 {
   position: relative;
 }
 
-.action.disabled {
+.action.disabled,
+.action[disabled] {
   opacity: 0.2;
   cursor: not-allowed;
 }
@@ -329,6 +330,7 @@ main .spinner .bounce2 {
 #editor-container {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   background-color: var(--background);
   position: fixed;
   padding-top: 4em;
@@ -351,6 +353,8 @@ main .spinner .bounce2 {
 #editor-container .breadcrumbs {
   height: 2.3em;
   padding: 0 1em;
+  position: relative;
+  top: 0;
 }
 
 /*** RTL - flip and position arrow of path ***/

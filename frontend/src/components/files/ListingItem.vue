@@ -8,11 +8,19 @@
     @dragover="dragOver"
     @drop="drop"
     @click="itemClick"
+    @mousedown="handleMouseDown"
+    @mouseup="handleMouseUp"
+    @mouseleave="handleMouseLeave"
+    @touchstart="handleTouchStart"
+    @touchend="handleTouchEnd"
+    @touchcancel="handleTouchCancel"
+    @touchmove="handleTouchMove"
     :data-dir="isDir"
     :data-type="type"
     :aria-label="name"
     :aria-selected="isSelected"
     :data-ext="getExtension(name).toLowerCase()"
+    @contextmenu="contextMenu"
   >
     <div>
       <img
@@ -51,6 +59,11 @@ import { useRouter } from "vue-router";
 
 const touches = ref<number>(0);
 
+const longPressTimer = ref<number | null>(null);
+const longPressTriggered = ref<boolean>(false);
+const longPressDelay = ref<number>(500);
+const startPosition = ref<{ x: number; y: number } | null>(null);
+const moveThreshold = ref<number>(10);
 
 const $showError = inject<IToastError>("$showError")!;
 const router = useRouter();
@@ -174,6 +187,10 @@ const drop = async (event: Event) => {
         from: fileStore.req?.items[i].url,
         to: props.url + encodeURIComponent(fileStore.req?.items[i].name),
         name: fileStore.req?.items[i].name,
+        size: fileStore.req?.items[i].size,
+        modified: fileStore.req?.items[i].modified,
+        overwrite: false,
+        rename: false,
       });
     }
   }
@@ -185,7 +202,7 @@ const drop = async (event: Event) => {
   const path = el.__vue__.url;
   const baseItems = (await api.fetch(path)).items;
 
-  const action = (overwrite: boolean, rename: boolean) => {
+  const action = (overwrite?: boolean, rename?: boolean) => {
     api
       .move(items, overwrite, rename)
       .then(() => {
@@ -196,29 +213,44 @@ const drop = async (event: Event) => {
 
   const conflict = upload.checkConflict(items, baseItems);
 
-  let overwrite = false;
-  let rename = false;
-
-  if (conflict) {
+  if (conflict.length > 0) {
     layoutStore.showHover({
-      prompt: "replace-rename",
-      confirm: (event: Event, option: any) => {
-        overwrite = option == "overwrite";
-        rename = option == "rename";
-
+      prompt: "resolve-conflict",
+      props: {
+        conflict: conflict,
+      },
+      confirm: (event: Event, result: Array<ConflictingResource>) => {
         event.preventDefault();
         layoutStore.closeHovers();
-        action(overwrite, rename);
+        for (let i = result.length - 1; i >= 0; i--) {
+          const item = result[i];
+          if (item.checked.length == 2) {
+            items[item.index].rename = true;
+          } else if (item.checked.length == 1 && item.checked[0] == "origin") {
+            items[item.index].overwrite = true;
+          } else {
+            items.splice(item.index, 1);
+          }
+        }
+        if (items.length > 0) {
+          action();
+        }
       },
     });
 
     return;
   }
 
-  action(overwrite, rename);
+  action(false, false);
 };
 
 const itemClick = (event: Event | KeyboardEvent) => {
+  // If long press was triggered, prevent normal click behavior
+  if (longPressTriggered.value) {
+    longPressTriggered.value = false;
+    return;
+  }
+
   if (
     singleClick.value &&
     !(event as KeyboardEvent).ctrlKey &&
@@ -228,6 +260,17 @@ const itemClick = (event: Event | KeyboardEvent) => {
   )
     open();
   else click(event);
+};
+
+const contextMenu = (event: MouseEvent) => {
+  event.preventDefault();
+  if (
+    fileStore.selected.length === 0 ||
+    event.ctrlKey ||
+    fileStore.selected.indexOf(props.index) === -1
+  ) {
+    click(event);
+  }
 };
 
 const click = (event: Event | KeyboardEvent) => {
@@ -244,7 +287,15 @@ const click = (event: Event | KeyboardEvent) => {
   }
 
   if (fileStore.selected.indexOf(props.index) !== -1) {
-    fileStore.removeSelected(props.index);
+    if (
+      (event as KeyboardEvent).ctrlKey ||
+      (event as KeyboardEvent).metaKey ||
+      fileStore.multiple
+    ) {
+      fileStore.removeSelected(props.index);
+    } else {
+      fileStore.selected = [props.index];
+    }
     return;
   }
 
@@ -270,7 +321,6 @@ const click = (event: Event | KeyboardEvent) => {
   }
 
   if (
-    !singleClick.value &&
     !(event as KeyboardEvent).ctrlKey &&
     !(event as KeyboardEvent).metaKey &&
     !fileStore.multiple
@@ -290,5 +340,77 @@ const getExtension = (fileName: string): string => {
     return fileName;
   }
   return fileName.substring(lastDotIndex);
+};
+
+// Long-press helper functions
+const startLongPress = (clientX: number, clientY: number) => {
+  startPosition.value = { x: clientX, y: clientY };
+  longPressTimer.value = window.setTimeout(() => {
+    handleLongPress();
+  }, longPressDelay.value);
+};
+
+const cancelLongPress = () => {
+  if (longPressTimer.value !== null) {
+    window.clearTimeout(longPressTimer.value);
+    longPressTimer.value = null;
+  }
+  startPosition.value = null;
+};
+
+const handleLongPress = () => {
+  if (singleClick.value) {
+    longPressTriggered.value = true;
+    click(new Event("longpress"));
+  }
+  cancelLongPress();
+};
+
+const checkMovement = (clientX: number, clientY: number): boolean => {
+  if (!startPosition.value) return false;
+
+  const deltaX = Math.abs(clientX - startPosition.value.x);
+  const deltaY = Math.abs(clientY - startPosition.value.y);
+
+  return deltaX > moveThreshold.value || deltaY > moveThreshold.value;
+};
+
+// Event handlers
+const handleMouseDown = (event: MouseEvent) => {
+  if (event.button === 0) {
+    startLongPress(event.clientX, event.clientY);
+  }
+};
+
+const handleMouseUp = () => {
+  cancelLongPress();
+};
+
+const handleMouseLeave = () => {
+  cancelLongPress();
+};
+
+const handleTouchStart = (event: TouchEvent) => {
+  if (event.touches.length === 1) {
+    const touch = event.touches[0];
+    startLongPress(touch.clientX, touch.clientY);
+  }
+};
+
+const handleTouchEnd = () => {
+  cancelLongPress();
+};
+
+const handleTouchCancel = () => {
+  cancelLongPress();
+};
+
+const handleTouchMove = (event: TouchEvent) => {
+  if (event.touches.length === 1 && startPosition.value) {
+    const touch = event.touches[0];
+    if (checkMovement(touch.clientX, touch.clientY)) {
+      cancelLongPress();
+    }
+  }
 };
 </script>

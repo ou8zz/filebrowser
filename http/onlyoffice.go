@@ -1,4 +1,4 @@
-package http
+package fbhttp
 
 import (
 	"crypto/hmac"
@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
+	"sync"
+	"time"
 
-	"github.com/filebrowser/filebrowser/v2/files"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // OnlyOfficeCallback represents the callback data from OnlyOffice Document Server
@@ -22,10 +24,18 @@ type OnlyOfficeCallback struct {
 	Status int      `json:"status"`
 	URL    string   `json:"url"`
 	Users  []string `json:"users"`
+	Token  string   `json:"token"`
 }
 
-// DocumentKeyMapping stores the mapping between OnlyOffice document keys and file paths
-var documentKeyMapping = make(map[string]string)
+type documentMapping struct {
+	Path   string
+	UserID uint
+}
+
+var (
+	documentKeyMappingMu sync.RWMutex
+	documentKeyMapping   = make(map[string]documentMapping)
+)
 
 // DocumentKeyMappingRequest represents the request to store document key mapping
 type DocumentKeyMappingRequest struct {
@@ -143,7 +153,9 @@ func onlyOfficeMappingHandler(w http.ResponseWriter, r *http.Request, d *data) (
 	}
 
 	// Store the document key mapping
-	documentKeyMapping[config.Document.Key] = configReq.FilePath
+	documentKeyMappingMu.Lock()
+	documentKeyMapping[config.Document.Key] = documentMapping{Path: configReq.FilePath, UserID: uint(configReq.UserID)}
+	documentKeyMappingMu.Unlock()
 	fmt.Printf("Stored document key mapping host:%s key:%s path:%s\n", configReq.Origin, config.Document.Key, configReq.FilePath)
 
 	w.Header().Set("Content-Type", "application/json")
@@ -292,43 +304,21 @@ func generateJWTToken(config *OnlyOfficeConfig, jwtSecret string) (string, error
 	return token, nil
 }
 
-// onlyOfficeCallbackHandler handles callbacks from OnlyOffice Document Server
 func onlyOfficeCallbackHandler(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
-	// Add CORS headers for OnlyOffice integration
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-	// Handle preflight OPTIONS request
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return http.StatusOK, nil
 	}
-	// Only accept POST requests
+
 	if r.Method != http.MethodPost {
 		return http.StatusMethodNotAllowed, fmt.Errorf("method not allowed")
 	}
 
-	// Get user ID from URL parameters
-	userIDStr := r.URL.Query().Get("userId")
-	if userIDStr != "" && userIDStr != "anonymous" {
-		// Try to parse user ID as uint
-		if userID, err := strconv.ParseUint(userIDStr, 10, 32); err == nil {
-			// Get user from database
-			if user, err := d.store.Users.Get(d.server.Root, uint(userID)); err == nil {
-				d.user = user
-				fmt.Printf("Found user for callback: %s (ID: %d)\n", user.Username, user.ID)
-			} else {
-				fmt.Printf("Failed to get user with ID %d: %v\n", userID, err)
-			}
-		} else {
-			fmt.Printf("Failed to parse user ID %s: %v\n", userIDStr, err)
-		}
-	}
-
-	// Parse the callback data
-	body, err := io.ReadAll(r.Body)
-
+	body, err := io.ReadAll(io.LimitReader(r.Body, 2<<20))
 	if err != nil {
 		return http.StatusBadRequest, fmt.Errorf("failed to read request body: %v", err)
 	}
@@ -339,55 +329,51 @@ func onlyOfficeCallbackHandler(w http.ResponseWriter, r *http.Request, d *data) 
 		return http.StatusBadRequest, fmt.Errorf("failed to parse callback data: %v", err)
 	}
 
-	// Log the callback for debugging
-	fmt.Printf("OnlyOffice callback received: %+v\n", callback)
-
-	// Handle different status codes
-	switch callback.Status {
-	case 1:
-		// Document is being edited
-		fmt.Println("Document is being edited")
-	case 2:
-		// Document is ready for saving
-		fmt.Println("Document is ready for saving")
-		if callback.URL != "" {
-			if err := downloadAndSaveDocument(callback, d); err != nil {
-				return http.StatusInternalServerError, fmt.Errorf("failed to save document: %v", err)
-			}
+	if strings.TrimSpace(d.settings.OnlyOffice.JwtSecret) != "" {
+		if strings.TrimSpace(callback.Token) == "" {
+			return http.StatusUnauthorized, fmt.Errorf("missing onlyoffice callback token")
 		}
-	case 3:
-		// Document saving error
-		fmt.Println("Document saving error occurred")
-	case 4:
-		// Document is closed with no changes
-		fmt.Println("Document is closed with no changes")
-	case 6:
-		// Document is being edited, but current state is saved (force save)
-		fmt.Println("Document force save")
-		if callback.URL != "" {
-			if err := downloadAndSaveDocument(callback, d); err != nil {
-				return http.StatusInternalServerError, fmt.Errorf("failed to save document: %v", err)
+		parsed, err := jwt.Parse(callback.Token, func(t *jwt.Token) (interface{}, error) {
+			if t.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+				return nil, fmt.Errorf("unexpected jwt alg: %s", t.Method.Alg())
 			}
+			return []byte(d.settings.OnlyOffice.JwtSecret), nil
+		}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+		if err != nil || parsed == nil || !parsed.Valid {
+			return http.StatusUnauthorized, fmt.Errorf("invalid onlyoffice callback token")
 		}
-	case 7:
-		// Error occurred while force saving
-		fmt.Println("Error occurred while force saving")
-	default:
-		fmt.Printf("Unknown status: %d\n", callback.Status)
 	}
 
-	// Return success response
-	response := map[string]interface{}{
-		"error": 0,
+	documentKeyMappingMu.RLock()
+	mapping, exists := documentKeyMapping[callback.Key]
+	documentKeyMappingMu.RUnlock()
+	if !exists {
+		return http.StatusBadRequest, fmt.Errorf("no file mapping for document key: %s", callback.Key)
+	}
+	if mapping.UserID == 0 {
+		return http.StatusBadRequest, fmt.Errorf("invalid user mapping for document key: %s", callback.Key)
+	}
+
+	user, err := d.store.Users.Get(d.server.Root, mapping.UserID)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	d.user = user
+
+	switch callback.Status {
+	case 2, 6:
+		if callback.URL != "" {
+			if err := downloadAndSaveDocument(callback, mapping.Path, d); err != nil {
+				return http.StatusInternalServerError, fmt.Errorf("failed to save document: %v", err)
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	return 0, json.NewEncoder(w).Encode(response)
+	return 0, json.NewEncoder(w).Encode(map[string]int{"error": 0})
 }
 
-// downloadAndSaveDocument downloads the document from OnlyOffice and saves it to the file system
-func downloadAndSaveDocument(callback OnlyOfficeCallback, d *data) error {
-	// Check if data and user are valid
+func downloadAndSaveDocument(callback OnlyOfficeCallback, filePath string, d *data) error {
 	if d == nil {
 		return fmt.Errorf("data parameter is nil")
 	}
@@ -395,15 +381,38 @@ func downloadAndSaveDocument(callback OnlyOfficeCallback, d *data) error {
 		return fmt.Errorf("user data is nil")
 	}
 
-	// Get the file path from the stored mapping
-	filePath, exists := documentKeyMapping[callback.Key]
-	if !exists {
-		return fmt.Errorf("no file path mapping found for document key: %s", callback.Key)
+	if callback.URL == "" {
+		return fmt.Errorf("empty download url")
 	}
 
-	// Download the document from OnlyOffice
-	fmt.Printf("callbackURL:%s\n", callback.URL)
-	resp, err := http.Get(callback.URL)
+	cbURL, err := url.Parse(callback.URL)
+	if err != nil || cbURL.Hostname() == "" {
+		return fmt.Errorf("invalid download url")
+	}
+
+	onlyofficeHostStr := strings.TrimSpace(d.settings.OnlyOffice.Host)
+	if onlyofficeHostStr == "" {
+		return fmt.Errorf("onlyoffice host not configured")
+	}
+	if !strings.Contains(onlyofficeHostStr, "://") {
+		onlyofficeHostStr = "http://" + onlyofficeHostStr
+	}
+	ooURL, err := url.Parse(onlyofficeHostStr)
+	if err != nil || ooURL.Hostname() == "" {
+		return fmt.Errorf("invalid onlyoffice host")
+	}
+	if !strings.EqualFold(cbURL.Hostname(), ooURL.Hostname()) {
+		return fmt.Errorf("download host mismatch")
+	}
+
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	resp, err := client.Get(callback.URL)
 	if err != nil {
 		return fmt.Errorf("failed to download document: %v", err)
 	}
@@ -413,27 +422,16 @@ func downloadAndSaveDocument(callback OnlyOfficeCallback, d *data) error {
 		return fmt.Errorf("failed to download document, status: %d", resp.StatusCode)
 	}
 
-	// The filePath from frontend is already the absolute path within user's scope
-	// So we use it directly instead of joining with user.Scope again
-	absPath := filepath.Join(d.user.Scope, filePath)
-	fmt.Printf("Final path: %s\n", absPath)
-
-	openFile, err := d.user.Fs.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, files.PermFile)
+	openFile, err := d.user.Fs.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, d.settings.FileMode)
 	if err != nil {
 		return fmt.Errorf("could not open file: %v", err)
 	}
 	defer openFile.Close()
 
-	_, err = openFile.Seek(0, 0)
-	if err != nil {
-		return fmt.Errorf("could not seek file: %v", err)
-	}
-
-	_, err = io.Copy(openFile, resp.Body)
+	_, err = io.Copy(openFile, io.LimitReader(resp.Body, 1<<30))
 	if err != nil {
 		return fmt.Errorf("could not write to file: %v", err)
 	}
 
-	fmt.Printf("Document saved successfully to: %s\n", absPath)
 	return nil
 }

@@ -1,8 +1,8 @@
 package files
 
 import (
-	"crypto/md5"  //nolint:gosec
-	"crypto/sha1" //nolint:gosec
+	"crypto/md5"
+	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
@@ -26,12 +26,9 @@ import (
 
 	"github.com/spf13/afero"
 
-	fbErrors "github.com/filebrowser/filebrowser/v2/errors"
+	fberrors "github.com/filebrowser/filebrowser/v2/errors"
 	"github.com/filebrowser/filebrowser/v2/rules"
 )
-
-const PermFile = 0664
-const PermDir = 0755
 
 var (
 	reSubDirs = regexp.MustCompile("(?i)^sub(s|titles)$")
@@ -68,6 +65,7 @@ type FileOptions struct {
 	Modify     bool
 	Expand     bool
 	ReadHeader bool
+	CalcImgRes bool
 	Token      string
 	Checker    rules.Checker
 	Content    bool
@@ -91,15 +89,20 @@ func NewFileInfo(opts *FileOptions) (*FileInfo, error) {
 		return nil, err
 	}
 
+	// Do not expose the name of root directory.
+	if file.Path == "/" {
+		file.Name = ""
+	}
+
 	if opts.Expand {
 		if file.IsDir {
-			if err := file.readListing(opts.Checker, opts.ReadHeader); err != nil { //nolint:govet
+			if err := file.readListing(opts.Checker, opts.ReadHeader, opts.CalcImgRes); err != nil {
 				return nil, err
 			}
 			return file, nil
 		}
 
-		err = file.detectType(opts.Modify, opts.Content, true)
+		err = file.detectType(opts.Modify, opts.Content, true, opts.CalcImgRes)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +174,7 @@ func stat(opts *FileOptions) (*FileInfo, error) {
 // algorithm. The checksums data is saved on File object.
 func (i *FileInfo) Checksum(algo string) error {
 	if i.IsDir {
-		return fbErrors.ErrIsDirectory
+		return fberrors.ErrIsDirectory
 	}
 
 	if i.Checksums == nil {
@@ -186,7 +189,6 @@ func (i *FileInfo) Checksum(algo string) error {
 
 	var h hash.Hash
 
-	//nolint:gosec
 	switch algo {
 	case "md5":
 		h = md5.New()
@@ -197,7 +199,7 @@ func (i *FileInfo) Checksum(algo string) error {
 	case "sha512":
 		h = sha512.New()
 	default:
-		return fbErrors.ErrInvalidOption
+		return fberrors.ErrInvalidOption
 	}
 
 	_, err = io.Copy(h, reader)
@@ -222,8 +224,7 @@ func (i *FileInfo) RealPath() string {
 	return i.Path
 }
 
-//nolint:goconst
-func (i *FileInfo) detectType(modify, saveContent, readHeader bool) error {
+func (i *FileInfo) detectType(modify, saveContent, readHeader bool, calcImgRes bool) error {
 	if IsNamedPipe(i.Mode) {
 		i.Type = "blob"
 		return nil
@@ -254,11 +255,13 @@ func (i *FileInfo) detectType(modify, saveContent, readHeader bool) error {
 		return nil
 	case strings.HasPrefix(mimetype, "image"):
 		i.Type = "image"
-		resolution, err := calculateImageResolution(i.Fs, i.Path)
-		if err != nil {
-			log.Printf("Error calculating image resolution: %v", err)
-		} else {
-			i.Resolution = resolution
+		if calcImgRes {
+			resolution, err := calculateImageResolution(i.Fs, i.Path)
+			if err != nil {
+				log.Printf("Error calculating image resolution: %v", err)
+			} else {
+				i.Resolution = resolution
+			}
 		}
 		return nil
 	case strings.HasSuffix(mimetype, "pdf"):
@@ -319,7 +322,7 @@ func (i *FileInfo) readFirstBytes() []byte {
 	}
 	defer reader.Close()
 
-	buffer := make([]byte, 512) //nolint:gomnd
+	buffer := make([]byte, 512)
 	n, err := reader.Read(buffer)
 	if err != nil && !errors.Is(err, io.EOF) {
 		log.Print(err)
@@ -392,7 +395,7 @@ func (i *FileInfo) addSubtitle(fPath string) {
 	i.Subtitles = append(i.Subtitles, fPath)
 }
 
-func (i *FileInfo) readListing(checker rules.Checker, readHeader bool) error {
+func (i *FileInfo) readListing(checker rules.Checker, readHeader bool, calcImgRes bool) error {
 	afs := &afero.Afero{Fs: i.Fs}
 	dir, err := afs.ReadDir(i.Path)
 	if err != nil {
@@ -456,7 +459,7 @@ func (i *FileInfo) readListing(checker rules.Checker, readHeader bool) error {
 			}
 		}
 
-		if !file.IsDir && strings.HasPrefix(mime.TypeByExtension(file.Extension), "image/") {
+		if !file.IsDir && strings.HasPrefix(mime.TypeByExtension(file.Extension), "image/") && calcImgRes {
 			resolution, err := calculateImageResolution(file.Fs, file.Path)
 			if err != nil {
 				log.Printf("Error calculating resolution for image %s: %v", file.Path, err)
@@ -473,7 +476,7 @@ func (i *FileInfo) readListing(checker rules.Checker, readHeader bool) error {
 			if isInvalidLink {
 				file.Type = "invalid_link"
 			} else {
-				err := file.detectType(true, false, readHeader)
+				err := file.detectType(true, false, readHeader, calcImgRes)
 				if err != nil {
 					return err
 				}

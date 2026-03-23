@@ -2,17 +2,24 @@ import dayjs from "dayjs";
 import { createI18n } from "vue-i18n";
 
 import("dayjs/locale/ar");
+import("dayjs/locale/bg");
+import("dayjs/locale/ca");
+import("dayjs/locale/cs");
 import("dayjs/locale/de");
 import("dayjs/locale/el");
 import("dayjs/locale/en");
 import("dayjs/locale/es");
 import("dayjs/locale/fr");
 import("dayjs/locale/he");
+import("dayjs/locale/hr");
 import("dayjs/locale/hu");
 import("dayjs/locale/is");
 import("dayjs/locale/it");
 import("dayjs/locale/ja");
 import("dayjs/locale/ko");
+import("dayjs/locale/lv");
+import("dayjs/locale/nb");
+import("dayjs/locale/nl");
 import("dayjs/locale/nl-be");
 import("dayjs/locale/pl");
 import("dayjs/locale/pt-br");
@@ -36,14 +43,26 @@ export function detectLocale() {
   // https://developer.mozilla.org/en-US/docs/Web/API/Navigator/language
   let locale = navigator.language.toLowerCase();
   switch (true) {
+    case /^ar\b/.test(locale):
+      locale = "ar";
+      break;
+    case /^bg\b/.test(locale):
+      locale = "bg";
+      break;
+    case /^cs\b/.test(locale):
+      locale = "cs";
+      break;
+    case /^lv\b/.test(locale):
+      locale = "lv";
+      break;
     case /^he\b/.test(locale):
       locale = "he";
       break;
+    case /^hr\b/.test(locale):
+      locale = "hr";
+      break;
     case /^hu\b/.test(locale):
       locale = "hu";
-      break;
-    case /^ar\b/.test(locale):
-      locale = "ar";
       break;
     case /^el.*/i.test(locale):
       locale = "el";
@@ -66,8 +85,9 @@ export function detectLocale() {
     case /^pt-br\b/.test(locale):
       locale = "pt-br";
       break;
+    case /^pt-pt\b/.test(locale):
     case /^pt\b/.test(locale):
-      locale = "pt";
+      locale = "pt-pt";
       break;
     case /^ja\b/.test(locale):
       locale = "ja";
@@ -100,7 +120,6 @@ export function detectLocale() {
     case /^tr\b/.test(locale):
       locale = "tr";
       break;
-    // ua wasnt a valid locale for ukraine
     case /^uk\b/.test(locale):
       locale = "uk";
       break;
@@ -111,9 +130,17 @@ export function detectLocale() {
     case /^sv\b/.test(locale):
       locale = "sv";
       break;
+    case /^nl\b/.test(locale):
+      locale = "nl";
+      break;
     case /^nl-be\b/.test(locale):
       locale = "nl-be";
       break;
+    case /^nb\b/.test(locale):
+    case /^no\b/.test(locale):
+      locale = "no";
+      break;
+
     default:
       locale = "en";
   }
