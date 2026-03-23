@@ -115,6 +115,8 @@ const isMobile = () => {
 
 **Docker 部署示例：**
 ```bash
+./build 1.0.0
+
 # 启动 OnlyOffice 文档服务器
 docker run -d --name onlyoffice-docs \
   -p 6066:80 \
