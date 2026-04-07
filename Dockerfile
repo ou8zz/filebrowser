@@ -15,6 +15,7 @@ ENV GID=100
 
 # BusyBox 里默认 nobody 是 65534:65534，这里把 nobody 映射成 99:100（nobody:users）
 RUN sed -i 's/^nobody:x:65534:65534:/nobody:x:99:100:/' /etc/passwd
+RUN adduser -D -u 1000 -G users ole
 
 # Copy binary, scripts, and configurations into image with proper ownership
 COPY --chown=nobody:users filebrowser /bin/filebrowser
