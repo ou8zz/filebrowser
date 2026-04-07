@@ -13,16 +13,14 @@ FROM busybox:1.37.0-musl
 ENV UID=99
 ENV GID=100
 
-# Create user group and user
-# RUN addgroup -g $GID user && \
-#     adduser -D -u $UID -G user user
-RUN adduser -D -u 99 -G users user
+# BusyBox 里默认 nobody 是 65534:65534，这里把 nobody 映射成 99:100（nobody:users）
+RUN sed -i 's/^nobody:x:65534:65534:/nobody:x:99:100:/' /etc/passwd
 
 # Copy binary, scripts, and configurations into image with proper ownership
-COPY --chown=user:users filebrowser /bin/filebrowser
-COPY --chown=user:users docker/common/ /
-COPY --chown=user:users docker/alpine/ /
-COPY --chown=user:users --from=fetcher /sbin/tini-static /bin/tini
+COPY --chown=nobody:users filebrowser /bin/filebrowser
+COPY --chown=nobody:users docker/common/ /
+COPY --chown=nobody:users docker/alpine/ /
+COPY --chown=nobody:users --from=fetcher /sbin/tini-static /bin/tini
 COPY --from=fetcher /JSON.sh /JSON.sh
 COPY --from=fetcher /etc/ca-certificates.conf /etc/ca-certificates.conf
 COPY --from=fetcher /etc/ca-certificates /etc/ca-certificates
@@ -31,7 +29,7 @@ COPY --from=fetcher /etc/ssl /etc/ssl
 
 # Create data directories, set ownership, and ensure healthcheck script is executable
 RUN mkdir -p /config /database /srv && \
-    chown -R user:users /config /database /srv \
+    chown -R nobody:users /config /database /srv \
     && chmod +x /healthcheck.sh
 
 # Define healthcheck script
