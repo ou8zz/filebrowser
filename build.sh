@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
 GIT_COMMIT="$(git log -n 1 --format=%h 2>/dev/null || echo unknown)"
-VERSION="$(git describe --tags --abbrev=0 --match=v* 2>/dev/null | cut -c 2- || echo 0.0.0)"
+VERSION="$1"
 
 build_frontend() {
   if command -v pnpm >/dev/null 2>&1; then
