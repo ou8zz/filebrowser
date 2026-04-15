@@ -125,6 +125,11 @@
         >
         </VideoPlayer>
         <object v-else-if="isPdf" class="pdf" :data="previewUrl"></object>
+        <OnlyOfficeEditorV3
+          v-else-if="isOfficeFile() && fileStore.req"
+          :file="fileStore.req"
+          :jwt="jwt">
+        </OnlyOfficeEditorV3>
         <div v-else-if="fileStore.req?.type == 'blob'" class="info">
           <div class="title">
             <i class="material-icons">feedback</i>
@@ -199,6 +204,7 @@ import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getTheme } from "@/utils/theme";
 import { useI18n } from "vue-i18n";
+import OnlyOfficeEditorV3 from "@/components/files/OnlyOfficeEditorV3.vue";
 
 type Rendition = any;
 
@@ -251,6 +257,19 @@ const getRendition = (_rendition: Rendition) => {
 };
 
 const mediaTypes: ResourceType[] = ["image", "video", "audio", "blob"];
+const officeTypes = [
+  ".docx",
+  ".doc",
+  ".odt",
+  ".rtf",
+  ".xlsx",
+  ".xls",
+  ".ods",
+  ".csv",
+  ".pptx",
+  ".ppt",
+  ".odp",
+];
 
 const previousLink = ref<string>("");
 const nextLink = ref<string>("");
@@ -325,6 +344,12 @@ const subtitles = computed(() => {
   }
   return [];
 });
+
+const isOfficeFile = () => {
+  return officeTypes.includes(fileStore.req?.extension.toLowerCase() || "");
+};
+
+const jwt = computed(() => authStore.jwt);
 
 const videoOptions = computed(() => {
   return { autoplay: autoPlay.value };
@@ -446,14 +471,20 @@ const updatePreview = async () => {
       }
 
       for (let j = i - 1; j >= 0; j--) {
-        if (mediaTypes.includes(listing.value[j].type)) {
+        if (
+          mediaTypes.includes(listing.value[j].type) ||
+          officeTypes.includes(listing.value[j].extension?.toLowerCase())
+        ) {
           previousLink.value = listing.value[j].url;
           previousRaw.value = prefetchUrl(listing.value[j]);
           break;
         }
       }
       for (let j = i + 1; j < listing.value.length; j++) {
-        if (mediaTypes.includes(listing.value[j].type)) {
+        if (
+          mediaTypes.includes(listing.value[j].type) ||
+          officeTypes.includes(listing.value[j].extension?.toLowerCase())
+        ) {
           nextLink.value = listing.value[j].url;
           nextRaw.value = prefetchUrl(listing.value[j]);
           break;
