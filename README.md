@@ -26,6 +26,11 @@
 **实现思路：**
 - 递归遍历文件夹结构计算总大小
 - 采用异步计算避免阻塞主线程
+- 前端增加加载状态提示，避免目录较大时长时间显示为 0
+
+**相关文件修改：**
+- `http/resource.go` - 新增 `/api/size` 目录大小统计接口
+- `frontend/src/components/prompts/Info.vue` - info 弹窗展示目录总大小并显示加载状态
 
 ### 3. 移动端编辑器自适应
 
@@ -133,6 +138,13 @@ docker exec office supervisorctl restart all
 - `settings/settings.go` - 添加 OnlyOffice 配置
 - `http/onlyoffice.go` - OnlyOffice API 接口
 - `frontend/src/views/settings/Global.vue` - 设置界面
+
+### 5. 面包屑（Breadcrumbs）显示优化
+
+**功能描述：** 面包屑默认最多显示 9 级路径，超出部分以 `...` 折叠，避免路径过深时 UI 过长。
+
+**相关文件：**
+- `frontend/src/components/Breadcrumbs.vue`
 
 ### 技术栈说明
 
