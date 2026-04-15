@@ -60,8 +60,9 @@ const items = computed(() => {
     }
   }
 
-  if (breadcrumbs.length > 3) {
-    while (breadcrumbs.length !== 4) {
+  const maxCrumbs = 9;
+  if (breadcrumbs.length > maxCrumbs) {
+    while (breadcrumbs.length !== maxCrumbs + 1) {
       breadcrumbs.shift();
     }
 
