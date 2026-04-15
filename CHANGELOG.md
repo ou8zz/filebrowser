@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.63.2](https://github.com/filebrowser/filebrowser/compare/v2.63.1...v2.63.2) (2026-04-11)
+
+
+### Bug Fixes
+
+* **preview:** let arrow keys seek video instead of switching files ([#5895](https://github.com/filebrowser/filebrowser/issues/5895)) ([0fadf28](https://github.com/filebrowser/filebrowser/commit/0fadf28b18e506ddca0027e83ebe567ac57932bf))
+
+## [2.63.1](https://github.com/filebrowser/filebrowser/compare/v2.63.0...v2.63.1) (2026-04-04)
+
+
+### Bug Fixes
+
+* check download permission in resource handler ([#5891](https://github.com/filebrowser/filebrowser/issues/5891)) ([1e03fea](https://github.com/filebrowser/filebrowser/commit/1e03feadb550e4414b5589a6a8df57f538efba15))
+* check share owner permissions on public share access ([#5888](https://github.com/filebrowser/filebrowser/issues/5888)) ([7dbf7a3](https://github.com/filebrowser/filebrowser/commit/7dbf7a3528234b2a9ee9c4115e8ecf58d258ca51))
+* enforce directory boundary in rule path matching ([#5889](https://github.com/filebrowser/filebrowser/issues/5889)) ([8adf127](https://github.com/filebrowser/filebrowser/commit/8adf127c7d33585333b8030869f6f318e6517179))
+* restrict default permissions for proxy-auth auto-provisioned users ([#5890](https://github.com/filebrowser/filebrowser/issues/5890)) ([f13c7c8](https://github.com/filebrowser/filebrowser/commit/f13c7c8cffd6d58ff29c4a6763ced1385f69961e))
+
+## [2.63.0](https://github.com/filebrowser/filebrowser/compare/v2.62.2...v2.63.0) (2026-04-04)
+
+
+### Features
+
+* enable copy operation on drag‑and‑drop with ctrl key ([#5882](https://github.com/filebrowser/filebrowser/issues/5882)) ([876cdb3](https://github.com/filebrowser/filebrowser/commit/876cdb34265b090c2a74a69509f4106f2c5e8726))
+
+
+### Bug Fixes
+
+* check download permission when sharing permission is enabled ([#5875](https://github.com/filebrowser/filebrowser/issues/5875)) ([0f39bd0](https://github.com/filebrowser/filebrowser/commit/0f39bd055efdadc15abd2f8146cf5da3793f8318))
+* **tus:** reject negative upload-length to prevent inconsistent cache entry ([#5876](https://github.com/filebrowser/filebrowser/issues/5876)) ([7a16129](https://github.com/filebrowser/filebrowser/commit/7a16129bfc07dbdc2fa52b99d2985c1bc0ea12e2))
+
+## [2.62.2](https://github.com/filebrowser/filebrowser/compare/v2.62.1...v2.62.2) (2026-03-28)
+
+
+### Bug Fixes
+
+* disable scripted content in epub ([126227b](https://github.com/filebrowser/filebrowser/commit/126227bb2754eee15cd7c722916c3bb8821084a2))
+* double slash in TUS upload path when readEntries returns multiple batches ([#5848](https://github.com/filebrowser/filebrowser/issues/5848)) ([432f3e6](https://github.com/filebrowser/filebrowser/commit/432f3e60ffdf92af6f8f56119a1bac8084f52a60))
+* include filename in Content-Disposition header for inline downloads ([#5860](https://github.com/filebrowser/filebrowser/issues/5860)) ([8f81b77](https://github.com/filebrowser/filebrowser/commit/8f81b77cf2a3da0a445f3700fbf4a0091ea46c07))
+* json escaping ([c406bda](https://github.com/filebrowser/filebrowser/commit/c406bda0c73ac8b187e23a97c05521edc77efa84))
+* self-registered users don't get execute perms ([b6a4fb1](https://github.com/filebrowser/filebrowser/commit/b6a4fb1f27f4d894b384c0f3acacda276d1338a5))
+* shares listing ([a8fc165](https://github.com/filebrowser/filebrowser/commit/a8fc1657b796c5da7190466beff13e680721b6d3))
+* touch Redis upload cache key on GetLength to prevent TTL expiry ([#5850](https://github.com/filebrowser/filebrowser/issues/5850)) ([4812536](https://github.com/filebrowser/filebrowser/commit/48125365551ce2b27790aaafd7594cf5ce52f1ba))
+* use html/template ([d9f9460](https://github.com/filebrowser/filebrowser/commit/d9f9460c1e51d10a25065e10358c12d5ced66ad9))
+
 ## [2.62.1](https://github.com/filebrowser/filebrowser/compare/v2.62.0...v2.62.1) (2026-03-14)
 
 

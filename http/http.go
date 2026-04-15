@@ -76,7 +76,7 @@ func NewHandler(
 	api.PathPrefix("/usage").Handler(monkey(diskUsage, "/api/usage")).Methods("GET")
 	api.PathPrefix("/size").Handler(monkey(resourceGetSizeHandler, "")).Methods("GET")
 
-	api.Path("/shares").Handler(monkey(shareListHandler, "/api/shares")).Methods("GET")
+	api.Handle("/shares", monkey(shareListHandler, "")).Methods("GET")
 	api.PathPrefix("/share").Handler(monkey(shareGetsHandler, "/api/share")).Methods("GET")
 	api.PathPrefix("/share").Handler(monkey(sharePostHandler, "/api/share")).Methods("POST")
 	api.PathPrefix("/share").Handler(monkey(shareDeleteHandler, "/api/share")).Methods("DELETE")
