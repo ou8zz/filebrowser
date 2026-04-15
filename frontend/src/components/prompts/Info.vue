@@ -15,7 +15,8 @@
 
       <p>
         <strong>{{ $t("prompts.size") }}:</strong>
-        <span id="content_length"></span> {{ humanSize }}
+        <span v-if="humanSizeLoading">{{ $t("files.loading") }}</span>
+        <span v-else>{{ humanSize }}</span>
       </p>
 
       <div v-if="resolution">
@@ -109,18 +110,19 @@ import { files as api } from "@/api";
 import { fetchURL } from "@/api/utils";
 import { ref } from 'vue';
 
-const humanSize = ref(0);
+const humanSize = ref("");
+const humanSizeLoading = ref(false);
 
 export default {
   name: "info",
   inject: ["$showError"],
   setup() {
     return {
-      humanSize
+      humanSize,
+      humanSizeLoading,
     }
   },
   created() {
-      console.log("exec getHumanSize");
       this.getHumanSize();
   },
   computed: {
@@ -205,16 +207,45 @@ export default {
       }
     },
     getHumanSize: async function () {
-      let urls = '';
-      for (const selected of this.selected) {
-        urls += this.req.items[selected].path + ',';
+      let sumFiles = 0;
+      const dirPaths = [];
+
+      if (this.selectedCount === 0 || !this.isListing) {
+        if (this.req?.isDir) {
+          dirPaths.push(this.req.path);
+        } else if (this.req) {
+          humanSize.value = filesize(this.req.size);
+          return;
+        }
+      } else {
+        for (const selected of this.selected) {
+          const item = this.req.items[selected];
+          if (item.isDir) {
+            dirPaths.push(item.path);
+          } else {
+            sumFiles += item.size;
+          }
+        }
       }
 
-      const res = await fetchURL(`/api/size?paths=${urls}`, {});
-      console.log("res", res);
-      const data = await res.json();
-      console.log("data.info:", data);
-      humanSize.value = filesize(data.size);
+      if (dirPaths.length === 0) {
+        humanSize.value = filesize(sumFiles);
+        return;
+      }
+
+      humanSizeLoading.value = true;
+      try {
+        const urls = dirPaths.join(",");
+        const res = await fetchURL(`/api/size?paths=${encodeURIComponent(urls)}`, {});
+        const data = await res.json();
+        const total = (data?.size ?? 0) + sumFiles;
+        humanSize.value = filesize(total);
+      } catch (e) {
+        humanSize.value = filesize(sumFiles);
+        this.$showError(e);
+      } finally {
+        humanSizeLoading.value = false;
+      }
     },
   },
 };

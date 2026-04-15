@@ -124,11 +124,6 @@
           :options="videoOptions"
         >
         </VideoPlayer>
-        <OnlyOfficeEditorV3
-          v-else-if="isOfficeFile() && fileStore.req"
-          :file="fileStore.req"
-          :jwt="jwt">
-        </OnlyOfficeEditorV3>
         <object v-else-if="isPdf" class="pdf" :data="previewUrl"></object>
         <div v-else-if="fileStore.req?.type == 'blob'" class="info">
           <div class="title">
@@ -202,10 +197,10 @@ import CsvViewer from "@/components/files/CsvViewer.vue";
 import { VueReader } from "vue-reader";
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import type { Rendition } from "epubjs";
 import { getTheme } from "@/utils/theme";
-import OnlyOfficeEditorV3 from "@/components/files/OnlyOfficeEditorV3.vue";
 import { useI18n } from "vue-i18n";
+
+type Rendition = any;
 
 // CSV file size limit for preview (5MB)
 // Prevents browser memory issues with large files
@@ -256,7 +251,6 @@ const getRendition = (_rendition: Rendition) => {
 };
 
 const mediaTypes: ResourceType[] = ["image", "video", "audio", "blob"];
-const officeTypes = [".docx", ".doc", ".odt", ".rtf", ".xlsx", ".xls", ".ods", ".csv", ".pptx", ".ppt", ".odp"];
 
 const previousLink = ref<string>("");
 const nextLink = ref<string>("");
@@ -331,12 +325,6 @@ const subtitles = computed(() => {
   }
   return [];
 });
-
-const isOfficeFile = () => {
-    return officeTypes.includes(fileStore.req?.extension.toLowerCase() || '');
-};
-
-const jwt = computed(() => authStore.jwt);
 
 const videoOptions = computed(() => {
   return { autoplay: autoPlay.value };
@@ -458,14 +446,14 @@ const updatePreview = async () => {
       }
 
       for (let j = i - 1; j >= 0; j--) {
-        if (mediaTypes.includes(listing.value[j].type) || officeTypes.includes(listing.value[j].extension?.toLowerCase())) {
+        if (mediaTypes.includes(listing.value[j].type)) {
           previousLink.value = listing.value[j].url;
           previousRaw.value = prefetchUrl(listing.value[j]);
           break;
         }
       }
       for (let j = i + 1; j < listing.value.length; j++) {
-        if (mediaTypes.includes(listing.value[j].type) || officeTypes.includes(listing.value[j].extension?.toLowerCase())) {
+        if (mediaTypes.includes(listing.value[j].type)) {
           nextLink.value = listing.value[j].url;
           nextRaw.value = prefetchUrl(listing.value[j]);
           break;
