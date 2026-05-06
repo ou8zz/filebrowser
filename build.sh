@@ -25,7 +25,7 @@ build_frontend() {
 }
 
 build_backend() {
-  CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
+  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-s -w -X \"github.com/filebrowser/filebrowser/v2/version.Version=${VERSION}\" -X \"github.com/filebrowser/filebrowser/v2/version.CommitSHA=${GIT_COMMIT}\"" \
     -o filebrowser \
     .
