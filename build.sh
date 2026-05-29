@@ -39,13 +39,13 @@ build_backend_armv7() {
 }
 
 build_frontend
-build_backend_armv7
+build_backend
 
 echo 'version:'$1
-# docker build -t registry.cn-shanghai.aliyuncs.com/ou88zz/filebrowser:$1 .
-# docker push registry.cn-shanghai.aliyuncs.com/ou88zz/filebrowser:$1
-docker build -t ou88zz/filebrowser:$1 .
-docker push ou88zz/filebrowser:$1
+docker build -t registry.cn-shanghai.aliyuncs.com/ou88zz/filebrowser:$1 .
+docker push registry.cn-shanghai.aliyuncs.com/ou88zz/filebrowser:$1
+# docker build -t ou88zz/filebrowser:$1 .
+# docker push ou88zz/filebrowser:$1
 
 git add .
 git commit -m "auto submit $1"
