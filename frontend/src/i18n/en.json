@@ -301,7 +301,9 @@
     "preview": "Preview",
     "settings": "Settings",
     "signup": "Signup",
-    "siteSettings": "Site Settings"
+    "siteSettings": "Site Settings",
+    "directoryTree": "Directory Tree",
+    "refresh": "Refresh"
   },
   "success": {
     "linkCopied": "Link copied!"

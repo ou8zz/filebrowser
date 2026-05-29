@@ -2,116 +2,120 @@
   <div>
     <div v-show="active" @click="closeHovers" class="overlay"></div>
   <nav :class="{ active }">
-    <template v-if="isLoggedIn">
-      <button @click="toAccountSettings" class="action">
-        <i class="material-icons">person</i>
-        <span>{{ user.username }}</span>
-      </button>
-      <button
-        class="action"
-        @click="toRoot"
-        :aria-label="$t('sidebar.myFiles')"
-        :title="$t('sidebar.myFiles')"
+    <div class="sidebar-content">
+      <template v-if="isLoggedIn">
+        <button @click="toAccountSettings" class="action">
+          <i class="material-icons">person</i>
+          <span>{{ user.username }}</span>
+        </button>
+        <button
+          class="action"
+          @click="toRoot"
+          :aria-label="$t('sidebar.myFiles')"
+          :title="$t('sidebar.myFiles')"
+        >
+          <i class="material-icons">folder</i>
+          <span>{{ $t("sidebar.myFiles") }}</span>
+        </button>
+
+        <div v-if="user.perm.create">
+          <button
+            @click="showHover('newDir')"
+            class="action"
+            :aria-label="$t('sidebar.newFolder')"
+            :title="$t('sidebar.newFolder')"
+          >
+            <i class="material-icons">create_new_folder</i>
+            <span>{{ $t("sidebar.newFolder") }}</span>
+          </button>
+
+          <button
+            @click="showHover('newFile')"
+            class="action"
+            :aria-label="$t('sidebar.newFile')"
+            :title="$t('sidebar.newFile')"
+          >
+            <i class="material-icons">note_add</i>
+            <span>{{ $t("sidebar.newFile") }}</span>
+          </button>
+        </div>
+
+        <div v-if="user.perm.admin">
+          <button
+            class="action"
+            @click="toGlobalSettings"
+            :aria-label="$t('sidebar.settings')"
+            :title="$t('sidebar.settings')"
+          >
+            <i class="material-icons">settings_applications</i>
+            <span>{{ $t("sidebar.settings") }}</span>
+          </button>
+        </div>
+        <button
+          v-if="canLogout"
+          @click="logout"
+          class="action"
+          id="logout"
+          :aria-label="$t('sidebar.logout')"
+          :title="$t('sidebar.logout')"
+        >
+          <i class="material-icons">exit_to_app</i>
+          <span>{{ $t("sidebar.logout") }}</span>
+        </button>
+      </template>
+      <template v-else>
+        <router-link
+          v-if="!hideLoginButton"
+          class="action"
+          to="/login"
+          :aria-label="$t('sidebar.login')"
+          :title="$t('sidebar.login')"
+        >
+          <i class="material-icons">exit_to_app</i>
+          <span>{{ $t("sidebar.login") }}</span>
+        </router-link>
+
+        <router-link
+          v-if="signup"
+          class="action"
+          to="/login"
+          :aria-label="$t('sidebar.signup')"
+          :title="$t('sidebar.signup')"
+        >
+          <i class="material-icons">person_add</i>
+          <span>{{ $t("sidebar.signup") }}</span>
+        </router-link>
+      </template>
+
+      <!-- Directory Tree -->
+      <DirectoryTree v-if="isLoggedIn && isFiles" class="sidebar-directory-tree" />
+
+      <div
+        class="credits"
+        v-if="isFiles && !disableUsedPercentage"
       >
-        <i class="material-icons">folder</i>
-        <span>{{ $t("sidebar.myFiles") }}</span>
-      </button>
-
-      <div v-if="user.perm.create">
-        <button
-          @click="showHover('newDir')"
-          class="action"
-          :aria-label="$t('sidebar.newFolder')"
-          :title="$t('sidebar.newFolder')"
-        >
-          <i class="material-icons">create_new_folder</i>
-          <span>{{ $t("sidebar.newFolder") }}</span>
-        </button>
-
-        <button
-          @click="showHover('newFile')"
-          class="action"
-          :aria-label="$t('sidebar.newFile')"
-          :title="$t('sidebar.newFile')"
-        >
-          <i class="material-icons">note_add</i>
-          <span>{{ $t("sidebar.newFile") }}</span>
-        </button>
+        <progress-bar :val="usage.usedPercentage" size="small"></progress-bar>
+        <br />
+        {{ usage.used }} of {{ usage.total }} used
       </div>
 
-      <div v-if="user.perm.admin">
-        <button
-          class="action"
-          @click="toGlobalSettings"
-          :aria-label="$t('sidebar.settings')"
-          :title="$t('sidebar.settings')"
-        >
-          <i class="material-icons">settings_applications</i>
-          <span>{{ $t("sidebar.settings") }}</span>
-        </button>
-      </div>
-      <button
-        v-if="canLogout"
-        @click="logout"
-        class="action"
-        id="logout"
-        :aria-label="$t('sidebar.logout')"
-        :title="$t('sidebar.logout')"
-      >
-        <i class="material-icons">exit_to_app</i>
-        <span>{{ $t("sidebar.logout") }}</span>
-      </button>
-    </template>
-    <template v-else>
-      <router-link
-        v-if="!hideLoginButton"
-        class="action"
-        to="/login"
-        :aria-label="$t('sidebar.login')"
-        :title="$t('sidebar.login')"
-      >
-        <i class="material-icons">exit_to_app</i>
-        <span>{{ $t("sidebar.login") }}</span>
-      </router-link>
-
-      <router-link
-        v-if="signup"
-        class="action"
-        to="/login"
-        :aria-label="$t('sidebar.signup')"
-        :title="$t('sidebar.signup')"
-      >
-        <i class="material-icons">person_add</i>
-        <span>{{ $t("sidebar.signup") }}</span>
-      </router-link>
-    </template>
-
-    <div
-      class="credits"
-      v-if="isFiles && !disableUsedPercentage"
-      style="width: 90%; margin: 2em 2.5em 3em 2.5em"
-    >
-      <progress-bar :val="usage.usedPercentage" size="small"></progress-bar>
-      <br />
-      {{ usage.used }} of {{ usage.total }} used
+      <p class="credits">
+        <span>
+          <span v-if="disableExternal">File Browser</span>
+          <a
+            v-else
+            rel="noopener noreferrer"
+            target="_blank"
+            href="https://github.com/filebrowser/filebrowser"
+            >File Browser</a
+          >
+          <span> {{ " " }} {{ version }}</span>
+        </span>
+        <span>
+          <a @click="help">{{ $t("sidebar.help") }}</a>
+        </span>
+      </p>
     </div>
-
-    <p class="credits">
-      <span>
-        <span v-if="disableExternal">File Browser</span>
-        <a
-          v-else
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/filebrowser/filebrowser"
-          >File Browser</a
-        >
-        <span> {{ " " }} {{ version }}</span>
-      </span>
-      <span>
-        <a @click="help">{{ $t("sidebar.help") }}</a>
-      </span>
-    </p>
   </nav>
   </div>
 </template>
@@ -136,6 +140,7 @@ import {
 } from "@/utils/constants";
 import { files as api } from "@/api";
 import ProgressBar from "@/components/ProgressBar.vue";
+import DirectoryTree from "@/components/DirectoryTree.vue";
 import prettyBytes from "pretty-bytes";
 
 const USAGE_DEFAULT = { used: "0 B", total: "0 B", usedPercentage: 0 };
@@ -148,6 +153,7 @@ export default {
   },
   components: {
     ProgressBar,
+    DirectoryTree,
   },
   inject: ["$showError"],
   computed: {
@@ -222,3 +228,19 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.sidebar-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-directory-tree {
+  flex: 1;
+  min-height: 0;
+  margin: 0.5em 0;
+  overflow: hidden;
+}
+</style>

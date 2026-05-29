@@ -146,6 +146,32 @@ docker exec office supervisorctl restart all
 **相关文件：**
 - `frontend/src/components/Breadcrumbs.vue`
 
+### 6. 侧边栏目录树
+
+**功能描述：** 在侧边栏添加目录树组件，提供直观的文件系统导航，支持快速展开/折叠文件夹，自动展开到当前浏览路径。
+
+**实现思路：**
+- 组件化设计：独立的 `DirectoryTree` 和 `TreeNode` 组件
+- 按需加载：只在展开文件夹时加载子目录，避免一次性加载大量数据
+- 路径同步：自动展开到当前访问路径
+- 响应式布局：集成到 Sidebar 中，利用 Flex 布局占据剩余空间
+
+**功能特性：**
+- 点击目录树节点直接导航到对应目录
+- 支持展开/折叠文件夹
+- 显示加载状态
+- 自动展开到当前浏览路径
+- 刷新按钮重新加载目录树
+- 当前路径高亮显示
+
+**相关文件：**
+- `frontend/src/components/DirectoryTree.vue` - 目录树主组件
+- `frontend/src/components/TreeNode.vue` - 树节点组件
+- `frontend/src/components/Sidebar.vue` - 侧边栏集成
+- `frontend/src/css/base.css` - 侧边栏样式调整
+- `frontend/src/i18n/locales/en.json` - 英文翻译
+- `frontend/src/i18n/locales/zh-cn.json` - 中文翻译
+
 ### 技术栈说明
 
 - **后端：** Go 1.23, 基于原有架构扩展

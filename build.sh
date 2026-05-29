@@ -15,7 +15,7 @@ build_frontend() {
   fi
 
   if command -v npm >/dev/null 2>&1; then
-    npm --prefix frontend install --legacy-peer-deps
+    # npm --prefix frontend install --legacy-peer-deps
     npm --prefix frontend run build
     return 0
   fi
@@ -31,12 +31,21 @@ build_backend() {
     .
 }
 
+build_backend_armv7() {
+  CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build \
+    -ldflags="-s -w -X \"github.com/filebrowser/filebrowser/v2/version.Version=${VERSION}\" -X \"github.com/filebrowser/filebrowser/v2/version.CommitSHA=${GIT_COMMIT}\"" \
+    -o filebrowser \
+    .
+}
+
 build_frontend
-build_backend
+build_backend_armv7
 
 echo 'version:'$1
-docker build -t registry.cn-shanghai.aliyuncs.com/ou88zz/filebrowser:$1 .
-docker push registry.cn-shanghai.aliyuncs.com/ou88zz/filebrowser:$1
+# docker build -t registry.cn-shanghai.aliyuncs.com/ou88zz/filebrowser:$1 .
+# docker push registry.cn-shanghai.aliyuncs.com/ou88zz/filebrowser:$1
+docker build -t ou88zz/filebrowser:$1 .
+docker push ou88zz/filebrowser:$1
 
 git add .
 git commit -m "auto submit $1"
