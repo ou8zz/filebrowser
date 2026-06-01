@@ -55,15 +55,26 @@ const loadChildren = async (node: TreeNodeData) => {
   try {
     const res = await api.fetch(node.url);
     if (res.isDir && res.items) {
-      node.children = res.items
-        .filter((item: any) => item.isDir)
+      // 先排序列表，目录在前，文件在后
+      const sortedItems = [...res.items].sort((a, b) => {
+        if (a.isDir && !b.isDir) return -1;
+        if (!a.isDir && b.isDir) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      node.children = sortedItems
         .map((item: any) => {
           const childPath = node.path === "/" 
             ? `/${item.name}` 
             : `${node.path}/${item.name}`;
-          const childUrl = node.url === "/files/" 
-            ? `/files/${encodeURIComponent(item.name)}/` 
-            : `${node.url}${encodeURIComponent(item.name)}/`;
+          // 目录 URL 以 / 结尾，文件 URL 不以 / 结尾
+          const childUrl = item.isDir 
+            ? (node.url === "/files/" 
+                ? `/files/${encodeURIComponent(item.name)}/` 
+                : `${node.url}${encodeURIComponent(item.name)}/`)
+            : (node.url === "/files/" 
+                ? `/files/${encodeURIComponent(item.name)}` 
+                : `${node.url}${encodeURIComponent(item.name)}`);
           
           return {
             name: item.name,

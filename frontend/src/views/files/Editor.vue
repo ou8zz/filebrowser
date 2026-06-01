@@ -40,7 +40,7 @@
         <div class="bounce3"></div>
       </div>
     </div>
-    <template v-else>
+    <div v-else class="editor-content">
       <div class="editor-header">
         <Breadcrumbs base="/files" noLink />
         <div>
@@ -75,9 +75,11 @@
         v-html="previewContent"
       ></div>
       
-      <form v-show="!isPreview || !isMarkdownFile" id="editor"></form>
-      <textarea v-if="isAce==false" class="ww" v-model="codeValue"></textarea>
-    </template>
+      <div v-show="!isPreview || !isMarkdownFile" class="editor-wrapper">
+        <form id="editor"></form>
+        <textarea v-if="isAce==false" class="ww" v-model="codeValue"></textarea>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -100,7 +102,7 @@ import { useLayoutStore } from "@/stores/layout";
 import { getEditorTheme } from "@/utils/theme";
 import { marked } from "marked";
 import markedKatex from "marked-katex-extension";
-import { inject, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
+import { inject, onBeforeUnmount, onMounted, ref, watch, watchEffect } from "vue";
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { read, copy } from "@/utils/clipboard";
@@ -213,6 +215,25 @@ onBeforeUnmount(() => {
   window.removeEventListener("beforeunload", handlePageChange);
   editor.value?.destroy();
 });
+
+// 监听 fileStore.req 的变化，更新编辑器内容
+watch(() => fileStore.req, (newReq) => {
+  if (!newReq) return;
+  const fileContent = newReq.content || "";
+  
+  // 更新简单的 textarea
+  if (!isAce.value) {
+    codeValue.value = fileContent;
+  }
+  
+  // 更新 Ace 编辑器
+  if (editor.value) {
+    editor.value.session.setValue(fileContent);
+    editor.value.session.setMode(modelist.getModeForPath(newReq.name).mode);
+    editor.value.setReadOnly(newReq.type === "textImmutable");
+    editor.value.session.getUndoManager().markClean();
+  }
+}, { deep: true });
 
 onBeforeRouteUpdate((to, from, next) => {
   if (editor.value?.session.getUndoManager().isClean()) {
@@ -371,8 +392,8 @@ const preview = () => {
 }
 
 .ww {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background-color: #272822;
   color: #F8F8F2;
   font: 12px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Source Code Pro', 'source-code-pro', monospace;
@@ -382,10 +403,35 @@ const preview = () => {
   color: var(--fg);
 }
 
+.editor-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
 .editor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 4em;
+  flex-shrink: 0;
+  padding: 0 1em;
+  box-sizing: border-box;
+}
+
+.editor-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.md_preview {
+  flex: 1;
+  overflow: auto;
+  padding: 1em;
+  box-sizing: border-box;
 }
 
 .editor-header > div > button {

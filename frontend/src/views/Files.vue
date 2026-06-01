@@ -8,7 +8,7 @@
 
     <breadcrumbs base="/files" />
     <errors v-if="error" :errorCode="error.status" />
-    <component v-else-if="currentView" :is="currentView"></component>
+    <component v-else-if="currentView" :is="currentView" :key="route.fullPath"></component>
     <div v-else>
       <h2 class="message delayed">
         <div class="spinner">

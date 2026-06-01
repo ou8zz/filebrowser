@@ -11,12 +11,12 @@
         <i v-else class="material-icons">chevron_right</i>
       </span>
       <span class="toggle-placeholder" v-else></span>
-      <i class="material-icons folder-icon">
-        {{ node.expanded ? "folder_open" : "folder" }}
+      <i class="material-icons file-icon" :class="{ 'folder-icon': node.isDir }">
+        {{ getFileIcon() }}
       </i>
       <span class="node-name">{{ node.name || "/" }}</span>
     </div>
-    <div v-if="node.expanded && node.children.length > 0" class="tree-children">
+    <div v-if="node.isDir && node.expanded && node.children.length > 0" class="tree-children">
       <TreeNode
         v-for="child in node.children"
         :key="child.path"
@@ -62,6 +62,13 @@ const handleClick = () => {
 
 const handleToggle = () => {
   emit("toggle", props.node);
+};
+
+const getFileIcon = () => {
+  if (props.node.isDir) {
+    return props.node.expanded ? "folder_open" : "folder";
+  }
+  return "insert_drive_file";
 };
 </script>
 
@@ -120,10 +127,14 @@ const handleToggle = () => {
   }
 }
 
-.folder-icon {
+.file-icon {
   font-size: 20px;
-  color: var(--color-warning);
+  color: var(--text-secondary);
   flex-shrink: 0;
+}
+
+.folder-icon {
+  color: var(--color-warning);
 }
 
 .tree-node-content.active .folder-icon {
@@ -131,7 +142,7 @@ const handleToggle = () => {
 }
 
 .node-name {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
