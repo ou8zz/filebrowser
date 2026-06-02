@@ -31,13 +31,6 @@ build_backend() {
     .
 }
 
-build_backend_armv7() {
-  CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build \
-    -ldflags="-s -w -X \"github.com/filebrowser/filebrowser/v2/version.Version=${VERSION}\" -X \"github.com/filebrowser/filebrowser/v2/version.CommitSHA=${GIT_COMMIT}\"" \
-    -o filebrowser \
-    .
-}
-
 build_frontend
 build_backend
 
