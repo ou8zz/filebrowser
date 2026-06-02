@@ -7,8 +7,8 @@ RUN apk update && \
     apk --no-cache add ca-certificates mailcap tini-static file && \
     wget -O /JSON.sh https://raw.githubusercontent.com/dominictarr/JSON.sh/0d5e5c77365f63809bf6e77ef44a1f34b0e05840/JSON.sh
 
-## Second stage: 明确指定 ARMv7 平台
-FROM --platform=linux/arm/v7 busybox:1.37.0-musl
+## Second stage: 使用 TARGETPLATFORM，它会被 docker buildx 的 --platform 参数自动设置
+FROM --platform=$TARGETPLATFORM busybox:1.37.0-musl
 
 # Define non-root user UID and GID
 ENV UID=1000
