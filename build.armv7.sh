@@ -35,7 +35,7 @@ build_frontend
 build_backend_armv7
 
 echo 'version:'$1
-docker build -f Dockerfile.armv7 -t ou88zz/filebrowser:$1 .
+docker buildx build --platform linux/arm/v7 --progress=plain --no-cache -f Dockerfile.armv7 -t ou88zz/filebrowser:$1 .
 docker push ou88zz/filebrowser:$1
 
 git add .
