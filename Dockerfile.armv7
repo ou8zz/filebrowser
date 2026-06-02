@@ -1,54 +1,41 @@
-## Multistage build: First stage fetches dependencies
-# 明确指定 fetcher 阶段在当前运行的 X86 宿主机平台（BUILDPLATFORM）上跑，这样下载速度极快！
-FROM --platform=$BUILDPLATFORM alpine:3.20 AS fetcher
+## Multistage build: fetch runtime dependencies for the target ARMv7 image
+ARG ALPINE_IMAGE=alpine:3.23
+ARG BUSYBOX_IMAGE=busybox:1.37.0-musl
 
-# install and copy ca-certificates, mailcap, and tini-static; download JSON.sh
+FROM ${ALPINE_IMAGE} AS fetcher
+
 RUN apk update && \
-    apk --no-cache add ca-certificates mailcap tini-static file && \
+    apk --no-cache add ca-certificates mailcap && \
     wget -O /JSON.sh https://raw.githubusercontent.com/dominictarr/JSON.sh/0d5e5c77365f63809bf6e77ef44a1f34b0e05840/JSON.sh
 
-## Second stage: 使用 TARGETPLATFORM，它会被 docker buildx 的 --platform 参数自动设置
-FROM --platform=$TARGETPLATFORM busybox:1.37.0-musl
+## Final runtime image
+FROM ${BUSYBOX_IMAGE}
 
-# Define non-root user UID and GID
-ENV UID=1000
-ENV GID=1000
+ENV UID=99
+ENV GID=100
 
-# BusyBox 里默认 nobody 是 65534:65534，这里把 nobody 映射成 1000:1000
-RUN sed -i 's/^nobody:x:65534:65534:/nobody:x:1000:1000:/' /etc/passwd
+RUN sed -i 's/^nobody:x:65534:65534:/nobody:x:99:100:/' /etc/passwd
+RUN adduser -D -u 1000 -G users ole
 
-# 【关键】：先复制文件，然后用 file 命令验证架构
-COPY --chown=nobody:users filebrowser /tmp/filebrowser
-
-# 验证文件架构 - 构建时就能看到结果！
-RUN echo "验证二进制文件架构..." && \
-    ls -lh /tmp/ && \
-    (which file || (echo "file command not found, trying another way..." && od -An -t x1 -N 4 /tmp/filebrowser)) && \
-    cp /tmp/filebrowser /bin/filebrowser && \
-    chmod +x /bin/filebrowser
-
+COPY --chown=nobody:users filebrowser /bin/filebrowser
 COPY --chown=nobody:users docker/common/ /
 COPY --chown=nobody:users docker/alpine/ /
-COPY --chown=nobody:users --from=fetcher /sbin/tini-static /bin/tini
 COPY --from=fetcher /JSON.sh /JSON.sh
 COPY --from=fetcher /etc/ca-certificates.conf /etc/ca-certificates.conf
 COPY --from=fetcher /etc/ca-certificates /etc/ca-certificates
 COPY --from=fetcher /etc/mime.types /etc/mime.types
 COPY --from=fetcher /etc/ssl /etc/ssl
 
-# Create data directories, set ownership, and ensure healthcheck script is executable
 RUN mkdir -p /config /database /srv && \
-    chown -R nobody:users /config /database /srv \
-    && chmod +x /healthcheck.sh
+    chown -R nobody:users /config /database /srv && \
+    chmod +x /healthcheck.sh
 
-# Define healthcheck script
 HEALTHCHECK --start-period=2s --interval=5s --timeout=3s CMD /healthcheck.sh
 
-# Set the user, volumes and exposed ports
 USER $UID:$GID
 
 VOLUME /srv /config /database
 
 EXPOSE 80
 
-ENTRYPOINT [ "tini", "--", "/init.sh" ]
+ENTRYPOINT [ "/init.sh" ]
