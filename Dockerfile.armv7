@@ -4,21 +4,29 @@ FROM --platform=$BUILDPLATFORM alpine:3.20 AS fetcher
 
 # install and copy ca-certificates, mailcap, and tini-static; download JSON.sh
 RUN apk update && \
-    apk --no-cache add ca-certificates mailcap tini-static && \
+    apk --no-cache add ca-certificates mailcap tini-static file && \
     wget -O /JSON.sh https://raw.githubusercontent.com/dominictarr/JSON.sh/0d5e5c77365f63809bf6e77ef44a1f34b0e05840/JSON.sh
 
-## Second stage: 动态适应目标架构（TARGETPLATFORM）
-FROM busybox:1.37.0-musl
+## Second stage: 明确指定 ARMv7 平台
+FROM --platform=linux/arm/v7 busybox:1.37.0-musl
 
 # Define non-root user UID and GID
 ENV UID=1000
 ENV GID=1000
 
-# BusyBox 里默认 nobody 是 65534:65534，这里把 nobody 映射成 99:100（nobody:users）
+# BusyBox 里默认 nobody 是 65534:65534，这里把 nobody 映射成 1000:1000
 RUN sed -i 's/^nobody:x:65534:65534:/nobody:x:1000:1000:/' /etc/passwd
 
-# 【关键注意】：你 COPY 进去的 filebrowser 二进制文件，必须是你刚刚编译好的 ARMv7 版本！
-COPY --chown=nobody:users filebrowser /bin/filebrowser
+# 【关键】：先复制文件，然后用 file 命令验证架构
+COPY --chown=nobody:users filebrowser /tmp/filebrowser
+
+# 验证文件架构 - 构建时就能看到结果！
+RUN echo "验证二进制文件架构..." && \
+    ls -lh /tmp/ && \
+    (which file || (echo "file command not found, trying another way..." && od -An -t x1 -N 4 /tmp/filebrowser)) && \
+    cp /tmp/filebrowser /bin/filebrowser && \
+    chmod +x /bin/filebrowser
+
 COPY --chown=nobody:users docker/common/ /
 COPY --chown=nobody:users docker/alpine/ /
 COPY --chown=nobody:users --from=fetcher /sbin/tini-static /bin/tini

@@ -34,6 +34,10 @@ build_backend_armv7() {
 build_frontend
 build_backend_armv7
 
+# 验证一下编译的文件是不是 ARM 架构
+echo "验证编译结果..."
+file filebrowser
+
 echo 'version:'$1
 docker buildx build --platform linux/arm/v7 --progress=plain --no-cache -f Dockerfile.armv7 -t ou88zz/filebrowser:$1 .
 docker push ou88zz/filebrowser:$1
