@@ -119,7 +119,7 @@ const route = useRoute();
 const router = useRouter();
 
 const editor = ref<Ace.Editor | null>(null);
-const fontSize = ref(parseInt(localStorage.getItem("editorFontSize") || "14"));
+const fontSize = ref(parseInt(localStorage.getItem("editorFontSize") || "12"));
 
 // 检测是否为移动设备
 const isMobile = () => {
@@ -196,17 +196,8 @@ onMounted(() => {
   );
 
   if (!layoutStore.loading) {
+    console.log("initEditorfileContent");
     initEditor(fileContent);
-  } else {
-    const unwatch = watchEffect(() => {
-      // Initialize editor when layout is loaded
-      if (!layoutStore.loading) {
-        setTimeout(() => {
-          initEditor(fileContent);
-          unwatch();
-        }, 50);
-      }
-    });
   }
 });
 
@@ -219,6 +210,8 @@ onBeforeUnmount(() => {
 // 监听 fileStore.req 的变化，更新编辑器内容
 watch(() => fileStore.req, (newReq) => {
   if (!newReq) return;
+  fileStore.updateRequest(newReq);
+  
   const fileContent = newReq.content || "";
   
   // 更新简单的 textarea
@@ -227,12 +220,16 @@ watch(() => fileStore.req, (newReq) => {
   }
   
   // 更新 Ace 编辑器
-  if (editor.value) {
-    editor.value.session.setValue(fileContent);
-    editor.value.session.setMode(modelist.getModeForPath(newReq.name).mode);
-    editor.value.setReadOnly(newReq.type === "textImmutable");
-    editor.value.session.getUndoManager().markClean();
-  }
+  const unwatch = watchEffect(() => {
+    // Initialize editor when layout is loaded
+    if (!layoutStore.loading) {
+      setTimeout(() => {
+        console.log("setTimeout2");
+        initEditor(fileContent);
+        unwatch();
+      }, 50);
+    }
+  });
 }, { deep: true });
 
 onBeforeRouteUpdate((to, from, next) => {
@@ -268,10 +265,6 @@ const initEditor = (fileContent: string) => {
     enableSnippets: true,
   });
 
-  // if (getTheme() === "dark") {
-  //   editor.value!.setTheme("ace/theme/monokai");
-  // }
-  // editor.value!.setTheme("ace/theme/monokai");
   editor.value.setFontSize(fontSize.value);
   editor.value.focus();
 

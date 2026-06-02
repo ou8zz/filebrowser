@@ -154,11 +154,19 @@ const fetchData = async () => {
   let url = route.path;
   if (url === "") url = "/";
   if (url[0] !== "/") url = "/" + url;
+  const expectedUrl = url;
+  
   // Cancel the ongoing request
   fetchDataController.abort();
   fetchDataController = new AbortController();
   try {
     const res = await api.fetch(url, fetchDataController.signal);
+    
+    // 重要：确保我们只处理当前预期的 URL 的响应
+    if (route.path !== expectedUrl && route.path !== expectedUrl.slice(1)) {
+      return;
+    }
+   
     fileStore.updateRequest(res);
     document.title = `${res.name || t("sidebar.myFiles")} - ${t("files.files")} - ${name}`;
     layoutStore.loading = false;
