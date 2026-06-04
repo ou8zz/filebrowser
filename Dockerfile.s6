@@ -4,8 +4,12 @@ RUN apk update && \
   apk --no-cache add ca-certificates mailcap jq libcap
 
 # Make user and create necessary directories
-RUN mkdir -p /config /database /srv
-#  chown -R abc:abc /config /database /srv
+RUN mkdir -p /config /database /srv && \
+  chown -R abc:abc /config /database /srv
+
+# 用来显示文件浏览器的用户
+RUN sed -i 's/^nobody:x:65534:65534:/nobody:x:99:100:/' /etc/passwd
+RUN adduser -D -u 1000 -G users ole
 
 # Copy files and set permissions
 COPY filebrowser /bin/filebrowser
