@@ -172,6 +172,31 @@ docker exec office supervisorctl restart all
 - `frontend/src/i18n/locales/en.json` - 英文翻译
 - `frontend/src/i18n/locales/zh-cn.json` - 中文翻译
 
+### 7. 快捷访问路径配置
+
+**功能描述：** 允许管理员在全局设置中配置快捷访问路径，这些路径会在侧边栏以目录树的形式显示，方便快速访问常用目录。
+
+**实现思路：**
+- 后端配置：扩展 Settings 结构体，添加 `QuickAccessPaths` 字段
+- 前端设置：在 Global Settings 中添加配置界面，支持多行输入
+- 组件化：独立的 `QuickAccessTree` 组件，支持多个根路径
+- 目录树：每个配置的路径作为独立的根节点，支持展开/折叠
+
+**功能特性：**
+- 支持配置多个快捷访问路径
+- 每个路径作为独立的目录树节点显示
+- 支持展开/折叠查看子文件和子文件夹
+- 点击文件或文件夹直接导航到对应位置
+- 配置支持通过设置界面保存
+
+**相关文件：**
+- `settings/settings.go` - 扩展 Settings 结构体
+- `http/settings.go` - API 支持新配置字段
+- `frontend/src/types/settings.d.ts` - 类型定义
+- `frontend/src/views/settings/Global.vue` - 设置界面
+- `frontend/src/components/QuickAccessTree.vue` - 快捷访问树组件
+- `frontend/src/components/Sidebar.vue` - 侧边栏集成
+
 ### 技术栈说明
 
 - **后端：** Go 1.23, 基于原有架构扩展

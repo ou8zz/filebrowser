@@ -21,7 +21,8 @@ type settingsData struct {
 	Tus                   settings.Tus          `json:"tus"`
 	Shell                 []string              `json:"shell"`
 	Commands              map[string][]string   `json:"commands"`
-	OnlyOffice       settings.OnlyOffice   `json:"onlyoffice"`
+	OnlyOffice            settings.OnlyOffice   `json:"onlyoffice"`
+	QuickAccessPaths      []string              `json:"quickAccessPaths"`
 }
 
 var settingsGetHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
@@ -38,7 +39,8 @@ var settingsGetHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, 
 		Tus:                   d.settings.Tus,
 		Shell:                 d.settings.Shell,
 		Commands:              d.settings.Commands,
-		OnlyOffice:       d.settings.OnlyOffice,
+		OnlyOffice:            d.settings.OnlyOffice,
+		QuickAccessPaths:      d.settings.QuickAccessPaths,
 	}
 
 	return renderJSON(w, r, data)
@@ -63,6 +65,7 @@ var settingsPutHandler = withAdmin(func(_ http.ResponseWriter, r *http.Request, 
 	d.settings.Shell = req.Shell
 	d.settings.Commands = req.Commands
 	d.settings.HideLoginButton = req.HideLoginButton
+	d.settings.QuickAccessPaths = req.QuickAccessPaths
 
 	err = d.store.Settings.Save(d.settings)
 	return errToStatus(err), err

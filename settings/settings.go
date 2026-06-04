@@ -48,6 +48,7 @@ type Settings struct {
 	DirMode               fs.FileMode         `json:"dirMode"`
 	HideDotfiles          bool                `json:"hideDotfiles"`
 	OnlyOffice       			OnlyOffice          `json:"onlyoffice"`
+	QuickAccessPaths      []string            `json:"quickAccessPaths"`
 }
 
 // GetRules implements rules.Provider.

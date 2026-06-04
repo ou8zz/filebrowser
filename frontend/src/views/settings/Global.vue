@@ -83,6 +83,17 @@
           </p>
 
           <p>
+            <label class="small"> 设置快捷访问目录:
+              <code>/files</code>  <code>/files/documents</code>
+            </label>
+            <input
+                class="input input--block"
+                type="text"
+                v-model="quickAccessPathsValue"
+              />
+          </p>
+
+          <p>
             <label for="minimumPasswordLength">{{
               t("settings.minimumPasswordLength")
             }}</label>
@@ -317,6 +328,7 @@ const commandObject = ref<{
   [key: string]: string[] | string;
 }>({});
 const shellValue = ref<string>("");
+const quickAccessPathsValue = ref<string>("");
 
 const $showError = inject<IToastError>("$showError")!;
 const $showSuccess = inject<IToastSuccess>("$showSuccess")!;
@@ -370,6 +382,9 @@ const save = async () => {
         .split(" ")
         .filter((s: string) => s !== "") ?? [],
     commands: {},
+    quickAccessPaths: quickAccessPathsValue.value
+      .split("\n")
+      .filter((p: string) => p.trim() !== ""),
   };
 
   const keys = Object.keys(settings.value.commands) as Array<
@@ -457,6 +472,7 @@ onMounted(async () => {
     originalSettings.value = original;
     settings.value = newSettings;
     shellValue.value = newSettings.shell.join(" ");
+    quickAccessPathsValue.value = (newSettings.quickAccessPaths || []).join("\n");
   } catch (err) {
     if (err instanceof Error) {
       error.value = err;

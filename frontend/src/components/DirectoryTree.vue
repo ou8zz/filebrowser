@@ -63,7 +63,7 @@ const loadChildren = async (node: TreeNodeData) => {
       });
       
       node.children = sortedItems
-        .map((item: any) => {
+        .map((item) => {
           const childPath = node.path === "/" 
             ? `/${item.name}` 
             : `${node.path}/${item.name}`;
@@ -83,7 +83,7 @@ const loadChildren = async (node: TreeNodeData) => {
             isDir: item.isDir,
             expanded: false,
             loading: false,
-            children: [],
+            children: [] as TreeNodeData[],
           };
         });
     }

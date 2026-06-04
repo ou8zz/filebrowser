@@ -12,6 +12,7 @@ interface ISettings {
   onlyoffice: SettingsOnlyOffice;
   shell: string[];
   commands: SettingsCommand;
+  quickAccessPaths: string[];
 }
 
 interface SettingsDefaults {

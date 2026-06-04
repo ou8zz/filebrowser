@@ -3,7 +3,13 @@
     <div v-show="active" @click="closeHovers" class="overlay"></div>
   <nav :class="{ active }">
     <div class="sidebar-content">
+    <button @click="toggleUserPad" class="action">
+      <i class="material-icons">person</i>
+      <span>用户面板</span>
+    </button>
+    <div id="user-pad" v-show="showUserPad">
       <template v-if="isLoggedIn">
+      
         <button @click="toAccountSettings" class="action">
           <i class="material-icons">person</i>
           <span>{{ user.username }}</span>
@@ -86,6 +92,13 @@
           <span>{{ $t("sidebar.signup") }}</span>
         </router-link>
       </template>
+      </div>
+
+      <!-- Quick Access -->
+      <div v-if="isLoggedIn && isFiles" class="sidebar-quick-access">
+        <div class="section-title">快捷访问</div>
+        <QuickAccessTree />
+      </div>
 
       <!-- Directory Tree -->
       <DirectoryTree v-if="isLoggedIn && isFiles" class="sidebar-directory-tree" />
@@ -121,7 +134,7 @@
 </template>
 
 <script>
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 import { mapActions, mapState } from "pinia";
 import { useAuthStore } from "@/stores/auth";
 import { useFileStore } from "@/stores/file";
@@ -141,6 +154,7 @@ import {
 import { files as api } from "@/api";
 import ProgressBar from "@/components/ProgressBar.vue";
 import DirectoryTree from "@/components/DirectoryTree.vue";
+import QuickAccessTree from "@/components/QuickAccessTree.vue";
 import prettyBytes from "pretty-bytes";
 
 const USAGE_DEFAULT = { used: "0 B", total: "0 B", usedPercentage: 0 };
@@ -149,11 +163,15 @@ export default {
   name: "sidebar",
   setup() {
     const usage = reactive(USAGE_DEFAULT);
-    return { usage, usageAbortController: new AbortController() };
+    const showUserPad = ref(false);
+    return { 
+      usage, usageAbortController: new AbortController(), 
+      showUserPad };
   },
   components: {
     ProgressBar,
     DirectoryTree,
+    QuickAccessTree,
   },
   inject: ["$showError"],
   computed: {
@@ -172,6 +190,9 @@ export default {
   },
   methods: {
     ...mapActions(useLayoutStore, ["closeHovers", "showHover"]),
+    toggleUserPad() {
+      this.showUserPad = !this.showUserPad;
+    },
     abortOngoingFetchUsage() {
       this.usageAbortController.abort();
     },
@@ -235,6 +256,18 @@ export default {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+}
+
+.sidebar-quick-access {
+  padding: 0.5em 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.section-title {
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .sidebar-directory-tree {
