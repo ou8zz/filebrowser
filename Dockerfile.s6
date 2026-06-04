@@ -1,3 +1,4 @@
+# s6 的baseimage-alpine:3.23 相比 alpine:3.23 较大，放弃使用
 FROM ghcr.io/linuxserver/baseimage-alpine:3.23
 
 RUN apk update && \
