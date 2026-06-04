@@ -11,28 +11,31 @@ RUN apk update && \
 ## Final runtime image
 FROM ${BUSYBOX_IMAGE}
 
-ENV UID=99
-ENV GID=100
+ENV UID=1000
+ENV GID=1000
 
-RUN sed -i 's/^nobody:x:65534:65534:/nobody:x:99:100:/' /etc/passwd
-RUN adduser -D -u 1000 -G users vance
+# Create user group and user
+RUN addgroup -g $GID vance && \
+    adduser -D -u $UID -G vance vance
 
-COPY --chown=nobody:users filebrowser /bin/filebrowser
-COPY --chown=nobody:users docker/common/ /
-COPY --chown=nobody:users docker/alpine/ /
+# Copy binary, scripts, and configurations into image with proper ownership
+COPY --chown=vance:vance filebrowser /bin/filebrowser
+COPY --chown=vance:vance docker/common/ /
+COPY --chown=vance:vance docker/alpine/ /
 COPY --from=fetcher /JSON.sh /JSON.sh
 COPY --from=fetcher /etc/ca-certificates.conf /etc/ca-certificates.conf
 COPY --from=fetcher /etc/ca-certificates /etc/ca-certificates
 COPY --from=fetcher /etc/mime.types /etc/mime.types
 COPY --from=fetcher /etc/ssl /etc/ssl
 
+# Create data directories, set ownership, and ensure healthcheck script is executable
 RUN mkdir -p /config /database /srv && \
-    chown -R nobody:users /config /database /srv && \
-    chmod +x /healthcheck.sh
+    chown -R vance:vance /config /database /srv \
+    && chmod +x /healthcheck.sh
 
 HEALTHCHECK --start-period=2s --interval=5s --timeout=3s CMD /healthcheck.sh
 
-USER $UID:$GID
+USER vance
 
 VOLUME /srv /config /database
 
