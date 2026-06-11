@@ -13,8 +13,8 @@ import (
 const DefaultUsersHomeBasePath = "/users"
 const DefaultLogoutPage = "/login"
 const DefaultMinimumPasswordLength = 12
-const DefaultFileMode = 0640
-const DefaultDirMode = 0750
+const DefaultFileMode = 0666
+const DefaultDirMode = 0777
 
 // AuthMethod describes an authentication method.
 type AuthMethod string

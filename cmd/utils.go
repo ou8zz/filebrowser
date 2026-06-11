@@ -23,7 +23,7 @@ import (
 	"github.com/filebrowser/filebrowser/v2/storage/bolt"
 )
 
-const databasePermissions = 0640
+const databasePermissions = 0666
 
 func getAndParseFileMode(flags *pflag.FlagSet, name string) (fs.FileMode, error) {
 	mode, err := flags.GetString(name)
